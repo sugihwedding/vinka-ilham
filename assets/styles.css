@@ -1,0 +1,601 @@
+:root{
+  --bg:#0f0f0f; --bg2:#171717; --card:#1f1a16; --gold:#c6a36b; --accent:#d7b27c; --text:#eee; --muted:#bbb;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+img{max-width:100%;display:block}
+.section{padding:70px 20px}
+.container{max-width:1100px;margin:0 auto}
+.container.narrow{max-width:720px}
+
+.nav{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:rgba(15,15,15,.8);backdrop-filter:saturate(1.2) blur(6px);border-bottom:1px solid #222}
+.nav .brand{font-family:'Playfair Display',serif;font-weight:600;color:var(--accent)}
+.nav a{color:var(--muted);text-decoration:none;margin:0 8px;font-size:.9rem}
+.nav a:hover{color:var(--text)}
+
+.hero{padding:0}
+.hero-card{position:relative}
+.hero-bg{width:100%;height:100vh;object-fit:cover;filter:contrast(1) saturate(1)}
+.hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.6))}
+.hero h1{font-family:Marcellus,serif;letter-spacing:.08em;margin:0 0 10px}
+.hero .couple{font-family:'Playfair Display',serif;font-size:2rem;margin:6px 0;color:var(--accent)}
+.hero .date{letter-spacing:.3em;color:#f1e6d4}
+
+.btn{border:1px solid var(--gold);color:var(--text);padding:10px 18px;border-radius:999px;background:transparent;cursor:pointer}
+.btn.primary{background:linear-gradient(135deg,var(--gold),var(--accent));color:#1a1310;border:none}
+.btn.ghost{border-color:var(--accent);color:var(--accent);background:transparent}
+
+.card{background:linear-gradient(180deg,#1e1a17,#15110f);border:1px solid #2a221c;border-radius:16px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.lead{color:var(--muted)}
+label{display:block;margin:12px 0}
+input,select,textarea{width:100%;padding:12px;border-radius:8px;border:1px solid #3a2f27;background:#120f0d;color:var(--text)}
+.status{min-height:20px;color:var(--accent)}
+
+.acara .frame-top{margin:0 auto 16px;max-width:220px;opacity:.85}
+.acara h2,.mempelai h2,.ayat h2,.gift h2,.galeri h2,.ucapan h2{font-family:'Playfair Display',serif;color:var(--accent);text-align:center}
+.agenda{text-align:center}
+.agenda h3{color:var(--gold);font-family:Marcellus,serif;letter-spacing:.05em}
+.agenda .when{margin:6px 0 8px}
+.agenda .where{color:var(--muted)}
+
+.mempelai .couple-card{display:flex;gap:18px;align-items:center;margin:16px 0}
+.mempelai .couple-card.reverse{flex-direction:row-reverse}
+.mempelai .avatar{width:140px;min-width:140px;height:140px;border-radius:50%;overflow:hidden;border:2px solid var(--gold)}
+.mempelai .ampersand{text-align:center;color:var(--gold);font-size:40px;margin:10px 0}
+.mempelai {
+  background-image: url(assets/bg-foto.png);
+  background-size:cover;
+  background-position-x: center;
+  background-repeat:repeat;
+  background-position: left;
+}
+
+
+
+.ayat .ayat-bg{margin:0 auto 16px;max-width:320px;border-radius:12px}
+.quran p{font-style:italic;line-height:1.8}
+.quran footer{color:var(--gold);text-align:right;margin-top:8px}
+
+.gift .story-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:16px}
+.gift .gift-actions{display:flex;justify-content:center;gap:10px;margin:10px 0}
+
+.countdown .countdown-wrap{position:relative}
+.countdown img{width:100%;height:80vh;object-fit:cover;filter:brightness(.9)}
+.countdown .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.timer{display:grid;grid-template-columns:repeat(4,auto);gap:10px}
+.timer div{background:rgba(0,0,0,.5);padding:10px 16px;border-radius:12px;text-align:center;border:1px solid #333}
+.timer span{font-size:2rem;color:#f5f5f5}
+.timer small{display:block;color:#ddd}
+
+.galeri .grid{columns:2;column-gap:10px}
+.galeri .grid img{margin:0 0 10px;border-radius:10px;border:1px solid #2a221c}
+@media(min-width:900px){.galeri .grid{columns:3}}
+
+.ucapan .wish{background:#171312;border:1px solid #2a221c;border-radius:12px;padding:12px;margin:10px 0}
+.ucapan .wish .meta{color:#9a8f86;font-size:.85rem}
+
+.footer{padding:24px 16px;text-align:center;color:#9e9e9e;border-top:1px solid #1e1e1e}
+
+/* ===== COVER ===== */
+.cover{position:fixed;inset:0;z-index:999;background:#f2ae42;color:#f6efe8;
+  display:grid;place-items:center;transition:opacity .8s ease, visibility .8s ease;}
+.cover.hide{opacity:0;visibility:hidden;pointer-events:none}
+.cover-bg{position:absolute;inset:0;overflow:hidden}
+.cover-bg img{width:100%;height:100%;object-fit:cover;
+  filter:contrast(1) saturate(1.05);animation:panZoom 18s ease-in-out infinite alternate}
+.cover-clouds{position:absolute;left:-50%;right:-50%;bottom:0;top:60%;
+  background:radial-gradient(50% 60% at 50% 50%, rgba(0,0,0,.0) 0%,
+  rgba(0,0,0,.35) 70%, rgba(0,0,0,.6) 100%);mix-blend-mode:multiply;animation:cloudDrift 32s linear infinite}
+.cover-content{position:relative;text-align:center;padding:24px 18px;top: -10%;}
+.cover-content h1{font-family:Marcellus,serif;letter-spacing:.06em;margin:0 0 8px}
+.cover-content .couple{font-family:'Playfair Display',serif;font-size:1.8rem;color:#f1e0c6;margin:.2rem 0}
+.cover-content .date{letter-spacing:.35em;color:#f6e7d2;margin:.2rem 0 .8rem}
+.cover-content .to{margin:.8rem 0 1rem;color:#f3e9da}
+.cover-content .to span{color:#3d2d0d}
+
+@keyframes panZoom{
+  0%{transform:scale(1.05) translate3d(0,0,0)}
+  100%{transform:scale(1.12) translate3d(0,-8px,0)}
+}
+@keyframes cloudDrift{
+  0%{transform:translateX(0)}100%{transform:translateX(25%)}
+}
+
+body.no-scroll{overflow:hidden}
+
+/* Background cover anim (ken-bu rns) */
+.cover-bg img{animation:panZoom 18s ease-in-out infinite alternate}
+
+/* Awan, wayang kiri/kanan, dan wayang kipas */
+.layer-clouds{background-image:url('assets/cover-clouds.png');animation:cloudFloat 40s linear infinite}
+.layer-wayang.left{background-image:url('assets/cover-wayang-left.png');bottom: -3%;animation:wayangSway 9s ease-in-out infinite}
+.layer-wayang.right{background-image:url('assets/cover-wayang-right.png');animation:wayangSway 10s ease-in-out infinite reverse}
+.layer-wayang-fan{background-image:url('assets/cover-wayang-fan.png');}
+
+/* Ornamen drop & partikel lembut */
+.cover .orn{animation:ornDrop .9s .3s ease-out forwards}
+.particles .particle{animation:rise 8s linear infinite}
+
+/* Tombol mute */
+.btn.mute.muted .on{display:none}
+.btn.mute.muted .off{display:inline-block}
+
+/* === FIX ukuran & posisi layer cover === */
+
+/* Pastikan cover benar-benar setinggi viewport */
+.cover{ height:100vh; }
+
+/* Pastikan area cover-bg jadi containing block untuk absolute children */
+.cover-bg{ position:absolute; inset:0; height:100%; width:100%; }
+
+/* Semua layer harus absolute dan tidak menerima klik */
+.cover .layer{ position:absolute; pointer-events:none; }
+
+/* Awan: membentang di bawah 50% bagian layar, aman untuk parallax */
+.layer-clouds{
+  left:-20%; right:-20%;
+  top:50%; bottom:0;
+  background-size:cover; background-repeat:no-repeat; background-position:center bottom;
+  opacity:.7; animation:cloudFloat 40s linear infinite;
+}
+
+/* >>> INI BAGIAN YANG HILANG DI FILE KAMU <<< */
+/* Ukuran & posisi dasar wayang kiri/kanan (selain background & anim) */
+.layer-wayang{
+  bottom:0;
+  height:55%;             /* tinggi relatif viewport cover */
+  width:48%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:bottom;
+  z-index:2;
+}
+.layer-wayang.left{
+  left:-2%;
+  /* background-image di-set di tempat lain, tidak apa-apa */
+}
+.layer-wayang.right{
+  right:-2%;
+}
+
+/* Wayang/elemen kipas: ukuran lebih kecil dan pivot putaran */
+.layer-wayang-fan{
+  /* bottom:6%;
+  left:52%; */
+  width:100%;
+  height:35%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  /* background-position:bottom left; */
+  transform-origin:20% 80%;
+  top: 8%;
+  z-index:3;
+}
+
+/* Optional, kalau mau pastikan hero photo di belakang semua */
+.cover-bg img{ z-index:1; position:absolute; inset:0; }
+
+/* === FIX ukuran & posisi layer cover === */
+
+/* Pastikan cover mengisi viewport */
+.cover{ height:100vh; }
+
+/* Pastikan area untuk anak absolute */
+.cover-bg{ position:absolute; inset:0; height:100%; width:100%; }
+
+/* Semua layer absolute & non-interaktif */
+.cover .layer{ position:absolute; pointer-events:none; will-change:transform; }
+
+/* Awan */
+.layer-clouds{
+  left:-20%; right:-20%;
+  top:50%; bottom:0;
+  background-size:cover; background-repeat:no-repeat; background-position:center bottom;
+  opacity:.7; animation:cloudFloat 40s linear infinite;
+}
+
+/* >>> KUNCI: ukuran dasar elemen wayang <<< */
+.layer-wayang{
+  bottom:0;
+  height:55%;           /* tinggi relatif cover (viewport) */
+  width:48%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:bottom;
+  z-index:2;
+}
+.layer-wayang.left{
+  left:-2%;
+  /* animasi sudah ada di file kamu: wayangSway 9s ease-in-out infinite */
+}
+.layer-wayang.right{
+  right:-2%;
+  /* animasi sudah ada: wayangSway 10s ease-in-out infinite reverse */
+}
+
+/* Elemen kipas */
+.layer-wayang-fan{
+  /* bottom:6%;
+  left:52%; */
+  width:100%;
+  height:35%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  transform-origin:20% 80%;
+  z-index:3;
+  /* animasi fanWave sudah ada di file kamu */
+}
+
+/* Opsional: pastikan foto latar cover berada di belakang semua layer */
+.cover-bg > img{ position:absolute; inset:0; z-index:1; }
+
+/* === Pastikan cover mengisi viewport & jadi containing block === */
+.cover{ height:100%; }
+.cover-bg{ position:absolute; inset:0; height:100%; width:100%; }
+
+/* Semua layer absolute dan siap dianimasikan */
+.cover .layer{ position:absolute; pointer-events:none; will-change:transform; }
+
+/* --- Awan --- */
+.layer-clouds{
+  left:-20%; right:-20%;
+  top:50%; bottom:0;
+  background-size:cover; background-repeat:no-repeat; background-position:center bottom;
+  opacity:.7;
+  animation: cloudFloat 40s linear infinite;
+}
+
+/* --- Wayang dasar (ukuran & posisi) --- */
+.layer-wayang{
+  bottom:0;
+  height:55%;           /* atur sesuai komposisi gambarmu */
+  width:48%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:bottom;
+  z-index:2;
+  /* Animasi goyang halus */
+  animation: wayangSway 9s ease-in-out infinite;
+}
+.layer-wayang.left{  
+  left:-2%;
+  bottom: -1%;
+  height: 60%;  /* PNG: assets/cover-wayang-left.png */ }
+.layer-wayang.right{
+  right:-2%;
+  /* bottom: -3%;           PNG: assets/cover-wayang-right.png */
+  animation-duration: 10s;
+  animation-direction: reverse; /* biar geraknya saling menyeimbangkan */
+}
+
+/* --- Elemen kipas --- */
+.layer-wayang-fan{
+  /* bottom:6%; */
+  /* left:30%; */
+  /* width:22%; */
+  height:15%;
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  /* transform-origin:20% 80%; */
+  z-index:3;
+  /* Animasi kipas */
+  /* animation: fanWave 3.2s ease-in-out infinite; */
+}
+
+/* --- (Opsional) Pastikan foto latar cover di belakang semua layer --- */
+.cover-bg > img{ position:absolute; inset:0; z-index:1; }
+
+/* === DEFINISI KEYFRAMES (wajib ada) === */
+@keyframes wayangSway{
+  0%  { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(-1deg); } /* boleh disetel lebih kecil/halus */
+  100%{ transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes fanWave{
+  0%  { transform: rotate(0deg); }
+  50% { transform: rotate(-6deg); }  /* sesuaikan amplitude */
+  100%{ transform: rotate(0deg); }
+}
+
+@keyframes cloudFloat{
+  0%  { transform: translateX(0); }
+  100%{ transform: translateX(12%); }
+}
+
+/* ====== EXIT TRANSITION (saat tombol Buka diklik) ====== */
+
+/* Saat keluar, hentikan sway/kipas idle & pakai animasi exit */
+.cover.exit .layer-wayang.left{
+  animation: wayangExitLeft 1.25s cubic-bezier(.2,.7,.4,1) forwards;
+}
+.cover.exit .layer-wayang.right{
+  animation: wayangExitRight 1.25s cubic-bezier(.2,.7,.4,1) forwards;
+}
+.cover.exit .layer-wayang-fan{
+  animation: fanExit 1.15s cubic-bezier(.2,.7,.4,1) .05s forwards;
+}
+.cover.exit .layer-clouds{
+  animation: cloudsExit 1.2s ease-out forwards;
+}
+.cover.exit .cover-bg > img{
+  animation: bgDim 1s ease forwards;
+}
+.cover.exit .cover-content{
+  animation: contentFade 0.6s ease forwards;
+}
+.cover.exit{
+  /* cover akan tetap terlihat sampai layer selesai, lalu JS menyembunyikan */
+}
+
+/* ====== KEYFRAMES EXIT ====== */
+
+/* Kedua wayang meluncur keluar layar + sedikit zoom dan blur untuk efek sinematik */
+@keyframes wayangExitLeft{
+  0%   { transform: translate(0,0) rotate(0) scale(1); filter: blur(0px); opacity:1; }
+  60%  { transform: translate(-8vw,3vh) rotate(-4deg) scale(1.06); filter: blur(.6px); }
+  100% { transform: translate(-120vw,10vh) rotate(-6deg) scale(1.08); filter: blur(2px); opacity:0; }
+}
+@keyframes wayangExitRight{
+  0%   { transform: translate(0,0) rotate(0) scale(1); filter: blur(0px); opacity:1; }
+  60%  { transform: translate(8vw,3vh) rotate(4deg) scale(1.06); filter: blur(.6px); }
+  100% { transform: translate(120vw,10vh) rotate(6deg) scale(1.08); filter: blur(2px); opacity:0; }
+}
+
+/* Kipas memberi gerak terakhir lalu “tertiup” ke kanan */
+@keyframes fanExit{
+  0%   { transform: rotate(0deg) scale(1); opacity:1; }
+  30%  { transform: rotate(-10deg) scale(1.02); }
+  100% { transform: translate(80vw,-6vh) rotate(12deg) scale(1.08); opacity:0; filter: blur(2px); }
+}
+
+/* Awan ikut drift + fade */
+@keyframes cloudsExit{
+  0%   { transform: translateX(0); opacity:.7; }
+  100% { transform: translateX(25%); opacity:0; }
+}
+
+/* Background sedikit meredup agar fokus ke gerakan wayang */
+@keyframes bgDim{
+  to { filter: brightness(.7) contrast(.95); }
+}
+
+/* Teks & tombol pada cover memudar duluan */
+@keyframes contentFade{
+  to { transform: translateY(-6px); opacity:0; }
+}
+/* ====== 3 LAYER AWAN BAWAH ====== */
+/* Base untuk semua clouds */
+.layer-clouds-1, .layer-clouds-2, .layer-clouds-3{
+  position:absolute; 
+  /* left:-25%; 
+  right:-25%;  */
+  bottom:-5%;
+  height:60%; 
+  width: 100%;      
+  background-repeat:no-repeat;
+  background-position:center ;
+  background-size:cover;     /* kalau PNG transparan lebar, bisa cover */
+  /* opacity:.78;                */
+  pointer-events:none;
+  overflow:visible;
+  will-change:transform, opacity;
+  filter: saturate(1.02) contrast(1.02);
+   /* ganti jika punya file berbeda per layer */
+}
+
+/* Z-INDEX ORDER (belakang → depan)
+   bg image (z:1 di rule lain) → clouds-1 (z:2) → wayang (z:3) → clouds-2 (z:4) → clouds-3 (z:5) */
+.cover-bg > img{ position:absolute; inset:0; z-index:1; }
+
+.layer-clouds-1{ z-index:2; opacity:.4; animation:cloudDriftSlow 60s linear infinite; background-image:url('assets/cover-clouds.png');}
+.layer-clouds-2{ z-index:4; opacity:.6; animation:cloudDriftMed  45s linear infinite reverse;background-image:url('assets/cover-clouds3.png'); width: 100%; background-size: contain; bottom: 5%;}
+.layer-clouds-3{ z-index:5; opacity:.8; animation:cloudDriftFast 30s linear infinite; background-image:url('assets/cover-clouds.png');bottom: -25% ; }
+
+/* Wayang harus di antara clouds-1 dan clouds-2 */
+.layer-wayang{ z-index:3; }      /* (kiri/kanan share ini) */
+.layer-wayang-fan{ z-index:3; }  /* kipas tetap satu grup dengan wayang */
+
+/* Animasi drift berbeda kecepatan → parallax lembut */
+@keyframes cloudDriftSlow{ 0%{transform:translateX(0)} 100%{transform:translateX(10%)} }
+@keyframes cloudDriftMed { 0%{transform:translateX(0)} 100%{transform:translateX(-14%)} }
+@keyframes cloudDriftFast{ 0%{transform:translateX(0)} 100%{transform:translateX(18%)} }
+
+/* ====== EXIT TRANSITION (sinkron dengan setup sebelumnya) ====== */
+.cover.exit .layer-clouds-1{ animation:cloudsExit1 1.2s ease-out forwards; }
+.cover.exit .layer-clouds-2{ animation:cloudsExit2 1.2s ease-out .05s forwards; }
+.cover.exit .layer-clouds-3{ animation:cloudsExit3 1.2s ease-out .1s forwards; }
+
+@keyframes cloudsExit1{ to{ transform:translateX(18%); opacity:0; } }
+@keyframes cloudsExit2{ to{ transform:translateX(-22%); opacity:0; } }
+@keyframes cloudsExit3{ to{ transform:translateX(26%); opacity:0; } }
+
+/* ========= Awan: geser kiri-kanan + naik-turun halus ========= */
+/* Durasi & amplitudo bisa disetel sesuai selera (lihat komentar di bawah) */
+
+@keyframes cloudDriftFloatSlow {
+  /* gerak kecil: ±6% horizontal, ±2% vertical */
+  0%   { transform: translate(0,   0); }
+  25%  { transform: translate( 3%, -1.2%); }
+  50%  { transform: translate( 6%,  0.0%); }
+  75%  { transform: translate( 3%,  1.2%); }
+  100% { transform: translate( 0,   0); }
+}
+
+@keyframes cloudDriftFloatMed {
+  /* gerak sedang: ±10% horizontal, ±3% vertical */
+  0%   { transform: translate(0,    0); }
+  25%  { transform: translate(-5%, -1.6%); }
+  50%  { transform: translate(-10%, 0.0%); }
+  75%  { transform: translate(-5%,  1.6%); }
+  100% { transform: translate(0,    0); }
+}
+
+@keyframes cloudDriftFloatFast {
+  /* gerak depan: ±14% horizontal, ±4% vertical */
+  0%   { transform: translate(0,     0); }
+  25%  { transform: translate(7%,   -2.2%); }
+  50%  { transform: translate(14%,   0.0%); }
+  75%  { transform: translate(7%,    2.2%); }
+  100% { transform: translate(0,     0); }
+}
+
+/* Kaitkan ke tiga layer awan (biarkan z-index & posisi yang sudah ada) */
+.layer-clouds-1{
+  /* pelan & halus */
+  animation: cloudDriftFloatSlow 38s ease-in-out infinite;
+  /* Tambahkan sedikit delay acak agar tidak start bersamaan */
+  animation-delay: .2s;
+}
+
+.layer-clouds-2{
+  /* sedang, arah berlawanan biar terasa kedalaman */
+  animation: cloudDriftFloatMed  32s ease-in-out infinite reverse;
+  animation-delay: .6s;
+}
+
+.layer-clouds-3{
+  /* paling depan: sedikit lebih cepat & amplitudo lebih besar */
+  animation: cloudDriftFloatFast 26s ease-in-out infinite;
+  animation-delay: .8s;
+}
+
+/* Opsional: bila user mengaktifkan “reduce motion”, tenangkan animasi */
+@media (prefers-reduced-motion: reduce){
+  .layer-clouds-1, .layer-clouds-2, .layer-clouds-3{
+    animation-duration: 60s;
+    animation-timing-function: linear;
+    /* atau bisa dinonaktifkan:
+       animation: none;
+    */
+  }
+}
+
+/* === Awan: gerak vertikal saja (atas-bawah) === */
+@keyframes cloudFloatVSlow {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-2.0%); }   /* amplitudo layer belakang */
+  100% { transform: translateY(0); }
+}
+@keyframes cloudFloatVMed {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-3.0%); }   /* amplitudo layer tengah */
+  100% { transform: translateY(0); }
+}
+@keyframes cloudFloatVFast {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-4.0%); }   /* amplitudo layer depan */
+  100% { transform: translateY(0); }
+}
+
+/* Kaitkan ke setiap layer awan (durasi beda → parallax lembut) */
+.layer-clouds-1{
+  animation: cloudFloatVSlow 22s ease-in-out infinite;
+}
+.layer-clouds-2{
+  animation: cloudFloatVMed  18s ease-in-out infinite;
+  animation-delay: .3s; /* sedikit offset biar tidak kompak */
+}
+.layer-clouds-3{
+  animation: cloudFloatVFast 14s ease-in-out infinite;
+  animation-delay: .6s;
+}
+/* === Floating Audio Dock (pojok kanan bawah) === */
+.audio-dock{
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100;                 /* di atas konten normal */
+  transition: opacity .35s ease, transform .35s ease, visibility .35s ease;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  pointer-events: none;         /* nonaktif sebelum siap */
+}
+
+body.audio-ready .audio-dock{
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.dock-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width: 44px; height: 44px; border-radius: 999px;
+  border: 1px solid rgba(215,178,124,.9);
+  background: rgba(20,14,10,.55);
+  color: #f4e8d5;
+  backdrop-filter: blur(6px) saturate(1.1);
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0,0,0,.25);
+}
+.dock-btn:hover{ background: rgba(20,14,10,.7); }
+
+.dock-btn .off{ display:none; }
+.dock-btn.muted .on{ display:none; }
+.dock-btn.muted .off{ display:inline; }
+
+/* === Bottom Nav Fixed === */
+.bottom-nav{
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background: rgba(15, 11, 9, .75);
+  backdrop-filter: blur(10px) saturate(1.2);
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 -10px 24px rgba(0,0,0,.25);
+  opacity: 0; visibility: hidden; transform: translateY(12px);
+  transition: opacity .28s ease, transform .28s ease, visibility .28s ease;
+}
+
+body.nav-ready .bottom-nav{
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+
+.bottom-nav .nav-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap: 4px;
+  height: 52px;
+  border-radius: 12px;
+  border: 1px solid rgba(215,178,124,.65);
+  background: linear-gradient(180deg, rgba(32,26,22,.75), rgba(20,15,12,.65));
+  color: #f4e8d5;
+  cursor:pointer;
+  text-decoration:none;
+  font-size:.84rem;
+  line-height:1;
+}
+.bottom-nav .nav-btn:hover{ filter: brightness(1.05); }
+.bottom-nav .nav-btn:active{ transform: translateY(1px); }
+.bottom-nav .nav-btn span{ font-size:.72rem; opacity:.9; }
+
+/* responsif kecil */
+@media (max-width: 480px){
+  .bottom-nav .nav-btn{ height: 48px; font-size:.8rem; }
+  .bottom-nav .nav-btn span{ display:none; } /* simpan ikon saja pada layar sempit */
+}
+
+/* beri ruang di bawah konten agar nav tidak menutupi isi */
+body.nav-ready .section:last-of-type{ padding-bottom: 100px; }
+
+.wrapakadresepsi{
+  display: flex;
+}
+.detailakad{
+  flex: 1;
+  border-right: 2px solid #c6a36b;
+}
+.detailresepsi{
+  flex: 1;
+}
+#bioilham{
+  text-align: right;
+}
