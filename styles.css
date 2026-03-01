@@ -4,7 +4,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
 img{max-width:100%;display:block}
-.section{padding:70px 20px}
+.section{padding:50px 20px}
 .container{max-width:1100px;margin:0 auto}
 .container.narrow{max-width:720px}
 
@@ -624,4 +624,9 @@ html, body {
 .menuju{
   color: var(--accent);
   
+}
+.containerhero{
+  width: auto;
+  position: relative;
+  top: 10vh;
 }
