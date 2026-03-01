@@ -1,3 +1,4 @@
+
 // ====== Konfigurasi yang mudah diedit ======
 const CONFIG = {
   eventDate: '2026-03-26T08:00:00+07:00',
@@ -83,7 +84,7 @@ $('#wishForm')?.addEventListener('submit', (e)=>{
 function showGiftOptions(){
   const lines = CONFIG.gift.map(g=>`${g.label}:\n${g.value}`).join('\n\n');
   navigator.clipboard.writeText(lines).catch(()=>{});
-  alert('Informasi hadiah telah disalin ke clipboard:\n\n'+lines);
+  // alert('Informasi hadiah telah disalin ke clipboard:\n\n'+lines);
 }
 
 // ===== Cover (splash) =====
@@ -296,3 +297,179 @@ openBtn?.addEventListener('click', async () => {
   // tampilkan nav jika cover sudah mempunyai class 'hide'
   if (cover?.classList.contains('hide')) showNav();
 })();
+
+
+  (function() {
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      // Fallback for older/HTTP contexts
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return Promise.resolve();
+      } catch (e) {
+        document.body.removeChild(ta);
+        return Promise.reject(e);
+      }
+    }
+
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-copy]');
+      if (!btn) return;
+      const text = btn.getAttribute('data-copy') || '';
+      const status = document.getElementById('giftCopyStatus');
+      try {
+        await copyToClipboard(text);
+        btn.textContent = 'Copied!';
+        if (status) status.textContent = 'Nomor rekening telah disalin.';
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          if (status) status.textContent = '';
+        }, 1600);
+      } catch (err) {
+        if (status) status.textContent = 'Gagal menyalin. Silakan salin manual.';
+      }
+    });
+  })();
+
+  // ===== GALERI: KONFIGURASI GAMBAR =====
+const GALLERY_IMAGES = [
+  {src:'assets/Foto-01.jpg', caption:''},
+  {src:'assets/Foto-02.jpg', caption:''},
+  {src:'assets/Foto-03.jpg', caption:''},
+  {src:'assets/Foto-04.jpg', caption:''},
+  {src:'assets/Foto-05.jpg', caption:''},
+  {src:'assets/Foto-06.jpg', caption:''},
+  {src:'assets/Foto-07.jpg', caption:''},
+  {src:'assets/Foto-08.jpg', caption:''},
+  {src:'assets/Foto-09.jpg', caption:''},
+];
+// ===== GALERI: SLIDER LOGIC =====
+(function(){
+  const slidesEl = document.getElementById('gallerySlides');
+  const dotsEl   = document.getElementById('galDots');
+  const btnPrev  = document.getElementById('galPrev');
+  const btnNext  = document.getElementById('galNext');
+  const chkAuto  = document.getElementById('galAutoplay');
+
+  if(!slidesEl) return; // section mungkin belum ada
+
+  // Render slides
+  slidesEl.innerHTML = GALLERY_IMAGES.map((g,i)=>(
+    `<figure class="slide" role="listitem" aria-label="Slide ${i+1}">
+       <img src="${g.src}" alt="${g.caption||''}">
+       ${g.caption ? `<figcaption>${g.caption}</figcaption>` : ''}
+     </figure>`
+  )).join('');
+
+  // Render dots
+  dotsEl.innerHTML = GALLERY_IMAGES.map((_,i)=>(
+    `<button class="dot" data-idx="${i}" aria-label="Ke slide ${i+1}"></button>`
+  )).join('');
+
+  const dots = Array.from(dotsEl.querySelectorAll('.dot'));
+  const total = GALLERY_IMAGES.length;
+  let index = 0;
+  let timer = null;
+  let autoInterval = 4000; // ms
+
+  function go(i, {animate=true} = {}){
+    index = (i + total) % total;
+    if(!animate){
+      slidesEl.style.transition = 'none';
+      requestAnimationFrame(()=>{
+        slidesEl.style.transform = `translateX(${-index*100}%)`;
+        requestAnimationFrame(()=>{ slidesEl.style.transition='transform .45s cubic-bezier(.2,.7,.2,1)'; });
+      });
+    }else{
+      slidesEl.style.transform = `translateX(${-index*100}%)`;
+    }
+    dots.forEach((d,di)=>d.classList.toggle('active', di===index));
+  }
+
+  function next(){ go(index+1); }
+  function prev(){ go(index-1); }
+
+  // Dots click
+  dots.forEach(d=>{
+    d.addEventListener('click', ()=> go(Number(d.dataset.idx)));
+  });
+
+  // Buttons
+  btnNext?.addEventListener('click', next);
+  btnPrev?.addEventListener('click', prev);
+
+  // Keyboard (panah kiri/kanan) ketika section galeri dalam viewport
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowRight') next();
+    else if(e.key==='ArrowLeft') prev();
+  });
+
+  // Autoplay
+  function startAuto(){
+    stopAuto();
+    if(chkAuto?.checked){
+      timer = setInterval(next, autoInterval);
+    }
+  }
+  function stopAuto(){
+    if(timer) clearInterval(timer), timer=null;
+  }
+  chkAuto?.addEventListener('change', startAuto);
+
+  // Pause saat hover/drag
+  slidesEl.addEventListener('mouseenter', stopAuto);
+  slidesEl.addEventListener('mouseleave', startAuto);
+  btnNext?.addEventListener('mouseenter', stopAuto);
+  btnPrev?.addEventListener('mouseenter', stopAuto);
+  btnNext?.addEventListener('mouseleave', startAuto);
+  btnPrev?.addEventListener('mouseleave', startAuto);
+
+  // Swipe (touch)
+  let startX=0, dx=0, dragging=false;
+  slidesEl.addEventListener('touchstart', (e)=>{
+    dragging = true;
+    startX = e.touches[0].clientX;
+    dx = 0;
+    stopAuto();
+    slidesEl.style.transition = 'none';
+  }, {passive:true});
+  slidesEl.addEventListener('touchmove', (e)=>{
+    if(!dragging) return;
+    dx = e.touches[0].clientX - startX;
+    const percent = dx / slidesEl.clientWidth * 100;
+    slidesEl.style.transform = `translateX(${(-index*100)+percent}%)`;
+  }, {passive:true});
+  slidesEl.addEventListener('touchend', ()=>{
+    dragging=false;
+    slidesEl.style.transition = 'transform .45s cubic-bezier(.2,.7,.2,1)';
+    const threshold = slidesEl.clientWidth * 0.18; // 18% geser
+    if(Math.abs(dx) > threshold){
+      dx<0 ? next() : prev();
+    }else{
+      go(index); // snap back
+    }
+    startAuto();
+  });
+
+  // Mulai
+  go(0, {animate:false});
+  startAuto();
+
+  // Optional: jika user mengaktifkan "prefers-reduced-motion", nonaktifkan autoplay
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    if (chkAuto) {
+      chkAuto.checked = false;
+    }
+    stopAuto();
+  }
+})();
+
