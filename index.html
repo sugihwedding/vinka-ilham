@@ -164,7 +164,7 @@
   <!-- (2) RSVP -->
   <section id="rsvp" class="section rsvp" data-seq="2">
     <div class="container narrow">
-      <h2>RSVP</h2>
+      <h2 style="text-align: center;">RSVP</h2>
       <p class="lead">Bantu kami mempersiapkan acara dengan mengirimkan konfirmasi kehadiran melalui formulir berikut:</p>
       <form id="rsvpForm" class="card">
         <label>Nama*<input name="nama" required placeholder="Nama lengkap"/></label>
@@ -186,7 +186,7 @@
         <label>Sampaikan ucapan untuk pernikahan kami*
           <textarea name="pesan" rows="4" required placeholder="Tulis ucapan hangat untuk kami"></textarea>
         </label>
-        <button class="btn primary" type="submit">Kirim</button>
+        <button class="btn primary" type="submit" style="margin-left: auto;display: block;">Kirim</button>
         <p id="rsvpStatus" class="status"></p>
       </form>
     </div>
@@ -194,48 +194,76 @@
 
   <!-- (6) Hadiah + preview foto -->
   <section id="gift" class="section gift" data-seq="6">
+    <h2 style="text-align: center;">Gift</h2>
+    <p style="text-align: center;">Kehadiran Anda merupakan hadiah terbaik. Namun jika berkenan mengirimkan tanda kasih dalam bentuk lain, silakan gunakan tombol berikut:</p> 
     <div class="container narrow">
-      <h2>Kirim Hadiah</h2>
-      <p>Kehadiran Anda merupakan hadiah terbaik. Namun jika berkenan mengirimkan tanda kasih dalam bentuk lain, silakan gunakan tombol berikut:</p>
-      <div class="gift-actions">
-        <button class="btn primary" id="btnGift">Kirim Hadiah</button>
-      </div>
-      <div class="story-grid">
-        assets/10.1.jpg
-        assets/8.1.jpg
-        assets/9.1.jpg
-        assets/6.1.jpg
-      </div>
+      <details class="gift-accordion">
+        <summary class="btn primary" id="btnGift">Kirim Hadiah</summary>
+              
+        <div class="gift-panel card">
+          <p class="gift-note">Terima kasih atas doa & perhatiannya. Jika berkenan, berikut rekening:</p>
+
+          <ul class="rekening-list">
+            <li class="rekening-item">
+              <div class="rek-meta">
+                <span class="bank">BCA</span>
+                <span class="name">a.n. John Doe</span>
+              </div>
+              <div class="rek-number-wrap">
+                <code class="rek-number" data-rek="1234567890">1234 567 890</code>
+                <button class="btn copy" type="button" data-copy="1234567890">Copy</button>
+              </div>
+            </li>
+            <li class="rekening-item">
+              <div class="rek-meta">
+                <span class="bank">Mandiri</span>
+                <span class="name">a.n. Jane Doe</span>
+              </div>
+              <div class="rek-number-wrap">
+                <code class="rek-number" data-rek="9876543210">9876 543 210</code>
+                <button class="btn copy" type="button" data-copy="9876543210">Copy</button>
+              </div>
+            </li>
+          </ul>
+
+          <p id="giftCopyStatus" class="status" aria-live="polite"></p>
+        </div>
+      </details>
     </div>
   </section>
-
  
 
   <!-- (8–9) Galeri -->
   <section id="galeri" class="section galeri" data-seq="8">
     <div class="container">
       <h2>Galeri</h2>
-      <div class="grid">
-        assets/8.1.jpg
-        assets/10.1.jpg
-        assets/9.1.jpg
-        assets/6.1.jpg
-        assets/5.1.jpg
-        assets/2.1.jpg
-        assets/3.1.jpg
+
+      <div class="slider" aria-label="Slideshow galeri foto">
+        <div class="slides" id="gallerySlides" role="list">
+          <!-- JS akan mengisi <figure class="slide">...</figure> di sini -->
+        </div>
+
+        <!-- Kontrol -->
+        <button class="nav prev" id="galPrev" aria-label="Sebelumnya">‹</button>
+        <button class="nav next" id="galNext" aria-label="Berikutnya">›</button>
+
+        <!-- Dots -->
+        <div class="dots" id="galDots" aria-label="Navigasi slide"></div>
+      </div>
+
+      <!-- Auto-play toggle (opsional) -->
+      <div class="slider-tools">
+        <label class="auto">
+          <input type="checkbox" id="galAutoplay" checked />
+          Auto-play
+        </label>
       </div>
     </div>
   </section>
 
-  <section class="section galeri" data-seq="9">
-    <div class="container">
-      <div class="grid">
-        assets/10.1.jpg
-        assets/6.1.jpg
-        assets/9.1.jpg
-      </div>
-    </div>
-  </section>
+  
+
+
 
   <!-- (10) Ucapan -->
   <section id="ucapan" class="section ucapan" data-seq="10">
