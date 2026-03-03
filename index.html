@@ -166,7 +166,7 @@
     <div class="container narrow">
       <h2 style="text-align: center;">RSVP</h2>
       <p class="lead">Bantu kami mempersiapkan acara dengan mengirimkan konfirmasi kehadiran melalui formulir berikut:</p>
-      <form id="rsvpForm" class="card">
+      <form id="rsvpForm" class="card" method="post">
         <label>Nama*<input name="nama" required placeholder="Nama lengkap"/></label>
         <label>No HP*<input name="hp" required placeholder="08xxxxxxxxxx"/></label>
         <label>Apakah anda akan hadir?*
@@ -277,7 +277,7 @@
     <div class="container narrow">
       <h2>Ucapan &amp; Doa</h2>
       <div id="wishList" class="wish-list"></div>
-      <form id="wishForm" class="card">
+      <form id="wishForm" class="card" method="post">
         <label>Nama*<input name="nama" required placeholder="Nama" /></label>
         <label>Ucapan*<textarea name="pesan" rows="2" required placeholder="Tulis ucapan"></textarea></label>
         <button class="btn" type="submit">Kirim Ucapan</button>
