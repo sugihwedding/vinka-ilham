@@ -112,55 +112,63 @@ function addWish({nama, pesan, time}) {
   const item = document.createElement('div');
   item.className = 'wish';
   const dt = new Date(time);
-  const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
-  const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+  const tanggal = isNaN(dt) ? '' : dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
+  const jam     = isNaN(dt) ? '' : dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
   item.innerHTML = `
     <div class="meta">${esc(nama)}</div>
     <div>${esc(pesan)}</div>
-    <div class="meta">${tanggal} • ${jam} WIB</div>
+    <div class="meta">${tanggal}${tanggal ? ' • ' : ''}${jam ? jam + ' WIB' : ''}</div>
   `;
-  // tampilkan yang baru di atas
-  wishListEl.prepend(item);
+  wishListEl.prepend(item); // terbaru di atas
 }
 
-// PENTING: deklarasikan sebagai function (di-hoist)
 async function fetchWishes(limit = 50){
   if (!wishListEl) return;
-
   try {
-    const res = await getFromSheet({ list: 'wish', limit: String(limit), _ts: Date.now() }); // <-- 'wish' (lihat poin B)
-    const list = (res && res.ok && Array.isArray(res.data)) ? res.data : null;
+    const res  = await getFromSheet({ list: 'wish', limit: String(limit), _ts: Date.now() });
 
+    // -- Normalisasi berbagai kemungkinan bentuk respons --
+    let list = null;
+    if (res && Array.isArray(res.data))    list = res.data;     // {data:[...]}
+    if (!list && res && Array.isArray(res.wishes)) list = res.wishes; // {wishes:[...]}
+    if (!list && Array.isArray(res))       list = res;          // [...] langsung
 
-  if (list && list.length > 0) {
-    // Pastikan terbaru di atas (jika backend kirim lama->baru)
-    const sorted = list.slice().sort((a,b) => (new Date(b.timestamp)) - (new Date(a.timestamp)));
+    if (!list || list.length === 0) {
+      console.warn('fetchWishes: tidak ada data yang bisa dipakai. Respons:', res);
+      return; // penting: jangan mengosongkan UI existing
+    }
+
+    // ambil waktu dari beberapa nama kolom umum
+    const takeTime = (w) => w.timestamp ?? w.time ?? w.createdAt ?? w.Tanggal ?? w.date ?? 0;
+
+    const sorted = list
+      .slice()
+      .sort((a,b) => new Date(takeTime(b)).getTime() - new Date(takeTime(a)).getTime());
 
     const frag = document.createDocumentFragment();
     sorted.forEach(w => {
+      const nama = (w.nama ?? w.name ?? w.Nama ?? '').toString();
+      const pesan = (w.pesan ?? w.message ?? w.ucapan ?? '').toString();
+      const t = takeTime(w) || Date.now();
+      const dt = new Date(t);
+      const tanggal = isNaN(dt) ? '' : dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
+      const jam     = isNaN(dt) ? '' : dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+
       const div = document.createElement('div');
       div.className = 'wish';
-      const dt = new Date(w.timestamp || Date.now());
-      const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
-      const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
       div.innerHTML = `
-        <div class="meta">${esc(w.nama)}</div>
-        <div>${esc(w.pesan)}</div>
-        <div class="meta">${tanggal} • ${jam} WIB</div>
+        <div class="meta">${esc(nama)}</div>
+        <div>${esc(pesan)}</div>
+        <div class="meta">${tanggal}${tanggal ? ' • ' : ''}${jam ? jam + ' WIB' : ''}</div>
       `;
       frag.appendChild(div);
     });
 
     wishListEl.innerHTML = '';
     wishListEl.appendChild(frag);
-  } else {
-    // Jangan hapus daftar kalau respons kosong/invalid
-    console.warn('fetchWishes: data kosong atau tidak valid, skip re-render.');
-  }
-
   } catch (e) {
     console.warn('Gagal memuat ucapan:', e);
-    // pada error, jangan hapus tampilan existing
+    // pada error, biarkan tampilan existing (jangan dikosongkan)
   }
 }
 
