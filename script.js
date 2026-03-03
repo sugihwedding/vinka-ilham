@@ -7,9 +7,12 @@
  ****************************************************/
 
 // ====== BACKEND (Google Apps Script) ======
-const GAS_GET_URL  = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // <= GANTI INI
 
-const GAS_POST_URL = 'https://script.google.com/macros/s/AKfycbwcdBXj_a1N1bhROj1LNPQBf1yDQMRvEtc-hEDdWRSIoJLLq7cZEt5TVxcfDp5-wIL-Pg/exec';
+const GAS_GET_URL  =
+  'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u';
+
+const GAS_POST_URL =
+  'https://script.google.com/macros/s/AKfycbwcdBXj_a1N1bhROj1LNPQBf1yDQMRvEtc-hEDdWRSIoJLLq7cZEt5TVxcfDp5-wIL-Pg/exec';
 
 // ====== KONFIGURASI ======
 const CONFIG = {
@@ -121,16 +124,39 @@ function addWish({nama, pesan, time}) {
 }
 
 // PENTING: deklarasikan sebagai function (di-hoist)
-async function fetchWishes(limit=50){
+async function fetchWishes(limit = 50){
   if (!wishListEl) return;
+
   try {
-    const res = await getFromSheet({ list:'wishes', limit:String(limit), _ts:Date.now() });
-    if (res.ok && Array.isArray(res.data)) {
+    const res = await getFromSheet({ list: 'wish', limit: String(limit), _ts: Date.now() }); // <-- 'wish' (lihat poin B)
+    const list = (res && res.ok && Array.isArray(res.data)) ? res.data : null;
+
+    if (list && list.length > 0) {
+      // render ulang hanya bila ada data
+      const frag = document.createDocumentFragment();
+      list.forEach(w => {
+        const time = w.timestamp || w.time || Date.now(); // fallback
+        const div = document.createElement('div');
+        div.className = 'wish';
+        const dt = new Date(time);
+        const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
+        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+        div.innerHTML = `
+          <div class="meta">${esc(w.nama)}</div>
+          <div>${esc(w.pesan)}</div>
+          <div class="meta">${tanggal} • ${jam} WIB</div>
+        `;
+        frag.appendChild(div);
+      });
       wishListEl.innerHTML = '';
-      res.data.forEach(w => addWish({ nama:w.nama, pesan:w.pesan, time:w.timestamp }));
+      wishListEl.appendChild(frag);
+    } else {
+      // Jika respons tidak valid / kosong, JANGAN menghapus yang sudah ada (biarkan optimistic UI tetap terlihat)
+      console.warn('fetchWishes: data kosong atau tidak valid, skip re-render.');
     }
   } catch (e) {
     console.warn('Gagal memuat ucapan:', e);
+    // pada error, jangan hapus tampilan existing
   }
 }
 
@@ -142,50 +168,67 @@ async function fetchRsvpSummary(){
   if (!box || !statsEl || !recentEl) return;
 
   try {
-    const res = await getFromSheet({ list:'rsvp', limit:'300', _ts:Date.now() });
-    if (res.ok) {
+    const res = await getFromSheet({ list: 'rsvp', limit: '300', _ts: Date.now() });
+    if (res && res.ok) {
       const sum = res.summary || { totalHadir:0, konfirmasiHadir:0, tidakHadir:0 };
       statsEl.textContent =
         `Konfirmasi Hadir: ${sum.konfirmasiHadir} | Tidak Hadir: ${sum.tidakHadir} | Estimasi Tamu Hadir: ${sum.totalHadir}`;
 
-      const items = (res.data || []).slice(0,5).map(r=>{
-        const dt  = new Date(r.timestamp);
-        const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
-        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-        return `<div class="wish">
-                  <div class="meta">${esc(r.nama)} • ${esc(r.hadir)} (${r.jumlah})</div>
-                  <div class="meta">${tgl} • ${jam} WIB</div>
-                  ${r.pesan ? `<div>${esc(r.pesan)}</div>` : ''}
-                </div>`;
-      }).join('');
-      recentEl.innerHTML = items || '<div class="meta">Belum ada data</div>';
+      const arr = Array.isArray(res.data) ? res.data.slice(0,5) : [];
+      if (arr.length > 0) {
+        const items = arr.map(r=>{
+          const dt  = new Date(r.timestamp);
+          const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
+          const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+          return `<div class="wish">
+                    <div class="meta">${esc(r.nama)} • ${esc(r.hadir)} (${r.jumlah})</div>
+                    <div class="meta">${tgl} • ${jam} WIB</div>
+                    ${r.pesan ? `<div>${esc(r.pesan)}</div>` : ''}
+                  </div>`;
+        }).join('');
+        recentEl.innerHTML = items;
+      } else {
+        // Jangan hapus konten lama jika sudah ada; kalau mau, beri placeholder hanya saat kosong total
+        if (!recentEl.innerHTML.trim()) {
+          recentEl.innerHTML = '<div class="meta">Belum ada data</div>';
+        }
+      }
       box.style.display = 'block';
     }
   } catch (e) {
     console.warn('Gagal memuat rekap RSVP:', e);
+    // pada error, biarkan konten lama
   }
 }
 
+
 // ====== HANDLER FORM ======
 async function onSubmitWish(e){
-  e.preventDefault(); // anti refresh & anti ubah URL
+  e.preventDefault();
   const form = e.currentTarget;
   const fd = new FormData(form);
   const nama  = (fd.get('nama')  || '').toString().trim();
   const pesan = (fd.get('pesan') || '').toString().trim();
   if (!nama || !pesan) return;
 
-  // Optimistic UI: tampilkan dulu agar terasa cepat
+  // Optimistic UI
   addWish({ nama, pesan, time: new Date() });
 
   try {
     const res = await postToSheet({ type:'wish', nama, pesan });
-    // Sinkron dari server (urutan & format)
-    if (res?.ok) fetchWishes();
+    if (res?.ok) {
+      // Re-sync dari server, tapi kita sudah lindungi fetchWishes agar tidak menghapus kalau kosong
+      fetchWishes();
+    } else {
+      console.warn('Submit ucapan gagal (ok=false):', res);
+      // optional: tampilkan status ke user
+    }
   } catch (err) {
     console.warn('Gagal submit ucapan:', err);
+    // optional: tampilkan status
+  } finally {
+    form.reset();
   }
-  form.reset();
 }
 
 async function onSubmitRSVP(e){
