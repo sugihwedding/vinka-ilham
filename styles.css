@@ -4,7 +4,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
 img{max-width:100%;display:block}
-.section{padding:20px 20px}
+.section{padding:40px 20px}
 .container{max-width:1100px;margin:0 auto}
 .container.narrow{max-width:720px}
 
@@ -761,4 +761,17 @@ body {
     position: absolute; bottom: 10px; right: 12px;
     font-size: .8rem; color: rgba(255,255,255,.75);
   }
+}
+
+.galeri .slide img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* dari cover -> contain */
+  background: #15110f;          /* warna latar kosong (opsional) */
+  filter: contrast(1.02) saturate(1.02);
+}
+
+.galeri .slide{ block-size: 52vh; }      /* mobile */
+@media (min-width: 900px){
+.galeri .slide{ block-size: 62vh; }    /* desktop */
 }
