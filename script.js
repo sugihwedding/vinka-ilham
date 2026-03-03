@@ -126,13 +126,13 @@ if(raw){
 for(let i=0;i<30;i++){ /* bikin <span class="particle"> dengan delay/durasi acak */ }
 
 // Musik & gate
-btnMute.addEventListener('click', () => setMuted(!audio.muted));
-btnOpen.addEventListener('click', async () => {
-  try{ await audio.play(); }catch(e){}
-  cover.classList.add('hide');
-  document.body.classList.remove('no-scroll'); // buka scroll
-  document.getElementById('hero').scrollIntoView({behavior:'smooth'});
-});
+// btnMute.addEventListener('click', () => setMuted(!audio.muted));
+// btnOpen.addEventListener('click', async () => {
+//   try{ await audio.play(); }catch(e){}
+//   cover.classList.add('hide');
+//   document.body.classList.remove('no-scroll'); // buka scroll
+//   document.getElementById('hero').scrollIntoView({behavior:'smooth'});
+// });
 
 // ===== Utilities =====
 function canPlayAudioEl(el){
