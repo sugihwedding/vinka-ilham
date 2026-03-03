@@ -626,10 +626,10 @@ html, body {
   
 }
 .containerhero{
-  width: auto;
+  width: 100%;
   position: relative;
   /* margin-top: 30vh; */
-  top: 10vh;
+  top: 30vh;
   padding: 2vh;
   background: linear-gradient(180deg, rgba(0, 0, 0, .35), rgba(0, 0, 0, .6));
   border-radius: 5px;
