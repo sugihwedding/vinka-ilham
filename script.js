@@ -58,26 +58,29 @@ function buildUrlWithParams(base, params){
 }
 
 // ====== BACKEND HELPERS (FETCH) ======
+
 async function postToSheet(payload){
-  if (!GAS_URL || !GAS_URL.includes('googleusercontent.com/macros/echo')) {
-    console.warn('GAS_URL belum diisi URL googleusercontent.com/macros/echo yang valid.');
+  if (!GAS_POST_URL) {
+    console.warn('GAS_POST_URL belum diisi URL web app (script.google.com/macros/s/.../exec).');
   }
-  const res = await fetch(GAS_URL, {
+  const res = await fetch(GAS_POST_URL, {
     method: 'POST',
-    headers: {'Content-Type':'text/plain;charset=utf-8'}, // simple request, hindari preflight
+    // 'text/plain' memang menghindari preflight, tapi pastikan Apps Script-mu handle-nya.
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify(payload)
   });
-  return res.json().catch(()=>({ok:false, error:'Invalid JSON'}));
+  return res.json().catch(() => ({ ok:false, error:'Invalid JSON' }));
 }
+
+
 async function getFromSheet(params){
-  if (!GAS_URL || !GAS_URL.includes('googleusercontent.com/macros/echo')) {
-    console.warn('GAS_URL belum diisi URL googleusercontent.com/macros/echo yang valid.');
+  if (!GAS_GET_URL) {
+    console.warn('GAS_GET_URL belum diisi URL googleusercontent.com/macros/echo yang valid.');
   }
-  // HINDARI double "?" -> gunakan builder
-  const url = buildUrlWithParams(GAS_URL, params);
+  const url = buildUrlWithParams(GAS_GET_URL, params);
   const res = await fetch(url, { method:'GET', cache:'no-store' });
-  return res.json();
-}
+  re
+
 
 // ====== COUNTDOWN ======
 function startCountdown(target){
