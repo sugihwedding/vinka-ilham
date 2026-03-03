@@ -783,3 +783,23 @@ body {
   filter: contrast(1.02) saturate(1.02);
 }
 
+/* Kontainer ucapan: tinggi tetap, scroll vertikal */
+#wishList {
+  max-height: 360px;      /* atur sesuai layout kamu */
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column; /* dukung prepend (baru di atas) */
+  gap: 10px;              /* jarak antar item */
+  padding-right: 6px;     /* ruang untuk scrollbar agar rapi */
+}
+
+/* Opsi: gaya scrollbar (WebKit) */
+#wishList::-webkit-scrollbar { width: 8px; }
+#wishList::-webkit-scrollbar-thumb {
+  background: rgba(215,178,124,.5);
+  border-radius: 999px;
+}
+
+@media (min-width: 900px) {
+  #wishList { max-height: 480px; }
+}
