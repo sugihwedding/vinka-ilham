@@ -208,32 +208,38 @@ async function fetchRsvpSummary(){
 
 // ====== HANDLER FORM ======
 
+// helper kecil
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 async function onSubmitWish(e){
   e.preventDefault();
   const form = e.currentTarget;
   const fd = new FormData(form);
-  const nama  = (fd.get('nama')  || '').toString().trim();
-  const pesan = (fd.get('pesan') || '').toString().trim();
+  const nama = (fd.get('nama') ?? '').toString().trim();
+  const pesan = (fd.get('pesan') ?? '').toString().trim();
   if (!nama || !pesan) return;
 
-  const btn = document.getElementById('wishSubmitBtn') || form.querySelector('button[type="submit"]');
+  const btn = document.getElementById('wishSubmitBtn') ?? form.querySelector('button[type="submit"]');
   setButtonLoading(btn, true, { textLoading: 'Mengirim...' });
 
   // Optimistic UI
-  addWish({ nama, pesan, time: new Date() });
+  const optimistic = { nama, pesan, time: new Date() };
+  addWish(optimistic);
 
   try {
     const res = await postToSheet({ type:'wish', nama, pesan });
     if (res?.ok) {
-      await fetchWishes(); // re-sync
+      // >>> tunda fetch agar GET sudah melihat baris baru
+      await sleep(1800);                       // 1.8 detik (boleh 1500–3000 ms)
+      await fetchWishes();                     // re-sync
     } else {
       console.warn('Submit ucapan gagal (ok=false):', res);
-      // Optional: tampilkan pesan error user-friendly
+      // (opsional) tampilkan pesan error user-friendly
     }
   } catch (err) {
     console.warn('Gagal submit ucapan:', err);
   } finally {
-    setButtonLoading(btn, false); // aktifkan kembali tombol
+    setButtonLoading(btn, false);
     form.reset();
   }
 }
@@ -242,16 +248,16 @@ async function onSubmitRSVP(e){
   e.preventDefault();
   const form = e.currentTarget;
   const rsvpStatus = $('#rsvpStatus');
-  const btn = document.getElementById('rsvpSubmitBtn') || form.querySelector('button[type="submit"]');
-
+  const btn = document.getElementById('rsvpSubmitBtn') ?? form.querySelector('button[type="submit"]');
   const data = Object.fromEntries(new FormData(form).entries());
+
   const payload = {
     type: 'rsvp',
-    nama:  (data.nama || '').trim(),
-    hp:    (data.hp   || '').trim(),
-    hadir: data.hadir || '',
-    jumlah: Number(data.jumlah || 0),
-    pesan: (data.pesan || '').trim()
+    nama: (data.nama ?? '').trim(),
+    hp: (data.hp ?? '').trim(),
+    hadir: data.hadir ?? '',
+    jumlah: Number(data.jumlah ?? 0),
+    pesan: (data.pesan ?? '').trim()
   };
 
   if (rsvpStatus) rsvpStatus.textContent = 'Mengirim...';
@@ -263,54 +269,21 @@ async function onSubmitRSVP(e){
       if (rsvpStatus) rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
       form.reset();
 
-      // Jika ada pesan, tampilkan juga di list ucapan
+      // tampilkan pesan RSVP (jika ada) secara optimistic
       if (payload.pesan) addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
 
+      // >>> tunda fetch agar GET sudah melihat baris baru
+      await sleep(1800);
       await fetchWishes();
       await fetchRsvpSummary();
     } else {
-      if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
+      if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error ?? 'Unknown error');
     }
   } catch (err) {
     if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan. Periksa koneksi dan coba lagi.';
     console.warn('Gagal submit RSVP:', err);
   } finally {
     setButtonLoading(btn, false);
-  }
-}
-
-
-async function onSubmitRSVP(e){
-  e.preventDefault(); // anti refresh & anti ubah URL
-  const form = e.currentTarget;
-  const rsvpStatus = $('#rsvpStatus');
-
-  const data = Object.fromEntries(new FormData(form).entries());
-  const payload = {
-    type: 'rsvp',
-    nama:  (data.nama || '').trim(),
-    hp:    (data.hp   || '').trim(),
-    hadir: data.hadir || '',
-    jumlah: Number(data.jumlah || 0),
-    pesan: (data.pesan || '').trim()
-  };
-
-  if (rsvpStatus) rsvpStatus.textContent = 'Mengirim...';
-
-  try {
-    const result = await postToSheet(payload);
-    if (result.ok) {
-      if (rsvpStatus) rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
-      form.reset();
-      if (payload.pesan) addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
-      fetchWishes();
-      fetchRsvpSummary();
-    } else {
-      if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
-    }
-  } catch (err) {
-    if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan. Periksa koneksi dan coba lagi.';
-    console.warn('Gagal submit RSVP:', err);
   }
 }
 
