@@ -803,3 +803,44 @@ body {
 @media (min-width: 900px) {
   #wishList { max-height: 480px; }
 }
+/* Spinner kecil di dalam tombol */
+.btn .spinner {
+  --sz: 16px;
+  width: var(--sz);
+  height: var(--sz);
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: none;             /* default tidak terlihat */
+  margin-right: 8px;
+  animation: spin .7s linear infinite;
+}
+
+/* Saat tombol loading, tampilkan spinner & redupkan teks */
+.btn.loading {
+  opacity: .85;
+  pointer-events: none;      /* cegah klik berulang */
+}
+.btn.loading .spinner { display: inline-block; }
+.btn.loading .btn-text { opacity: .9; }
+
+/* Untuk tombol yang tidak punya <span class="spinner">, kita bisa inline-block general */
+button[disabled] {
+  opacity: .7;
+  cursor: not-allowed;
+}
+
+/* Animasi */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#wishList {
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 8px;
+}
+@media (min-width: 900px){
+  #wishList { max-height: 500px; }
+}
