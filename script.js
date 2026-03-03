@@ -131,29 +131,33 @@ async function fetchWishes(limit = 50){
     const res = await getFromSheet({ list: 'wish', limit: String(limit), _ts: Date.now() }); // <-- 'wish' (lihat poin B)
     const list = (res && res.ok && Array.isArray(res.data)) ? res.data : null;
 
-    if (list && list.length > 0) {
-      // render ulang hanya bila ada data
-      const frag = document.createDocumentFragment();
-      list.forEach(w => {
-        const time = w.timestamp || w.time || Date.now(); // fallback
-        const div = document.createElement('div');
-        div.className = 'wish';
-        const dt = new Date(time);
-        const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
-        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-        div.innerHTML = `
-          <div class="meta">${esc(w.nama)}</div>
-          <div>${esc(w.pesan)}</div>
-          <div class="meta">${tanggal} • ${jam} WIB</div>
-        `;
-        frag.appendChild(div);
-      });
-      wishListEl.innerHTML = '';
-      wishListEl.appendChild(frag);
-    } else {
-      // Jika respons tidak valid / kosong, JANGAN menghapus yang sudah ada (biarkan optimistic UI tetap terlihat)
-      console.warn('fetchWishes: data kosong atau tidak valid, skip re-render.');
-    }
+
+  if (list && list.length > 0) {
+    // Pastikan terbaru di atas (jika backend kirim lama->baru)
+    const sorted = list.slice().sort((a,b) => (new Date(b.timestamp)) - (new Date(a.timestamp)));
+
+    const frag = document.createDocumentFragment();
+    sorted.forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'wish';
+      const dt = new Date(w.timestamp || Date.now());
+      const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
+      const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+      div.innerHTML = `
+        <div class="meta">${esc(w.nama)}</div>
+        <div>${esc(w.pesan)}</div>
+        <div class="meta">${tanggal} • ${jam} WIB</div>
+      `;
+      frag.appendChild(div);
+    });
+
+    wishListEl.innerHTML = '';
+    wishListEl.appendChild(frag);
+  } else {
+    // Jangan hapus daftar kalau respons kosong/invalid
+    console.warn('fetchWishes: data kosong atau tidak valid, skip re-render.');
+  }
+
   } catch (e) {
     console.warn('Gagal memuat ucapan:', e);
     // pada error, jangan hapus tampilan existing
@@ -475,3 +479,15 @@ window.addEventListener('DOMContentLoaded', () => {
   fetchWishes();
   fetchRsvpSummary();
 });
+
+
+let wishTimer = null;
+function scheduleWishRefresh(){
+  clearTimeout(wishTimer);
+  wishTimer = setTimeout(() => fetchWishes(), 35000); // 35 detik
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) scheduleWishRefresh();
+});
+// Panggil sekali setelah init:
+scheduleWishRefresh();
