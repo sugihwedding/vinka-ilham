@@ -7,8 +7,9 @@
  ****************************************************/
 
 // ====== BACKEND (Google Apps Script) ======
-const GAS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // <= GANTI INI
+const GAS_GET_URL  = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // <= GANTI INI
 
+const GAS_POST_URL = 'https://script.google.com/macros/s/AKfycbwcdBXj_a1N1bhROj1LNPQBf1yDQMRvEtc-hEDdWRSIoJLLq7cZEt5TVxcfDp5-wIL-Pg/exec';
 
 // ====== KONFIGURASI ======
 const CONFIG = {
