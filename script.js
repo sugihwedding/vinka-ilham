@@ -207,6 +207,7 @@ async function fetchRsvpSummary(){
 
 
 // ====== HANDLER FORM ======
+
 async function onSubmitWish(e){
   e.preventDefault();
   const form = e.currentTarget;
@@ -215,25 +216,69 @@ async function onSubmitWish(e){
   const pesan = (fd.get('pesan') || '').toString().trim();
   if (!nama || !pesan) return;
 
+  const btn = document.getElementById('wishSubmitBtn') || form.querySelector('button[type="submit"]');
+  setButtonLoading(btn, true, { textLoading: 'Mengirim...' });
+
   // Optimistic UI
   addWish({ nama, pesan, time: new Date() });
 
   try {
     const res = await postToSheet({ type:'wish', nama, pesan });
     if (res?.ok) {
-      // Re-sync dari server, tapi kita sudah lindungi fetchWishes agar tidak menghapus kalau kosong
-      fetchWishes();
+      await fetchWishes(); // re-sync
     } else {
       console.warn('Submit ucapan gagal (ok=false):', res);
-      // optional: tampilkan status ke user
+      // Optional: tampilkan pesan error user-friendly
     }
   } catch (err) {
     console.warn('Gagal submit ucapan:', err);
-    // optional: tampilkan status
   } finally {
+    setButtonLoading(btn, false); // aktifkan kembali tombol
     form.reset();
   }
 }
+
+async function onSubmitRSVP(e){
+  e.preventDefault();
+  const form = e.currentTarget;
+  const rsvpStatus = $('#rsvpStatus');
+  const btn = document.getElementById('rsvpSubmitBtn') || form.querySelector('button[type="submit"]');
+
+  const data = Object.fromEntries(new FormData(form).entries());
+  const payload = {
+    type: 'rsvp',
+    nama:  (data.nama || '').trim(),
+    hp:    (data.hp   || '').trim(),
+    hadir: data.hadir || '',
+    jumlah: Number(data.jumlah || 0),
+    pesan: (data.pesan || '').trim()
+  };
+
+  if (rsvpStatus) rsvpStatus.textContent = 'Mengirim...';
+  setButtonLoading(btn, true, { textLoading: 'Mengirim...' });
+
+  try {
+    const result = await postToSheet(payload);
+    if (result.ok) {
+      if (rsvpStatus) rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
+      form.reset();
+
+      // Jika ada pesan, tampilkan juga di list ucapan
+      if (payload.pesan) addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
+
+      await fetchWishes();
+      await fetchRsvpSummary();
+    } else {
+      if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
+    }
+  } catch (err) {
+    if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan. Periksa koneksi dan coba lagi.';
+    console.warn('Gagal submit RSVP:', err);
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
 
 async function onSubmitRSVP(e){
   e.preventDefault(); // anti refresh & anti ubah URL
@@ -491,3 +536,40 @@ document.addEventListener('visibilitychange', () => {
 });
 // Panggil sekali setelah init:
 scheduleWishRefresh();
+
+function setButtonLoading(btn, loading, {textLoading='Mengirim...', textIdle} = {}){
+  if (!btn) return;
+  const textSpan = btn.querySelector('.btn-text');
+  const spinner  = btn.querySelector('.spinner');
+
+  // Simpan label awal sekali saja
+  if (textIdle === undefined) {
+    if (!btn.dataset.idleText) btn.dataset.idleText = textSpan ? textSpan.textContent : btn.textContent;
+    textIdle = btn.dataset.idleText;
+  }
+
+  if (loading) {
+    btn.classList.add('loading');
+    btn.setAttribute('disabled', 'disabled');
+    if (textSpan) textSpan.textContent = textLoading; else btn.textContent = textLoading;
+    if (spinner) spinner.style.display = 'inline-block';
+  } else {
+    btn.classList.remove('loading');
+    btn.removeAttribute('disabled');
+    if (textSpan) textSpan.textContent = textIdle; else btn.textContent = textIdle;
+    if (spinner) spinner.style.display = 'none';
+  }
+}
+
+
+// Cegah submit berulang kalau tombol sedang loading
+['wishForm', 'rsvpForm'].forEach(id => {
+  const form = document.getElementById(id);
+  form?.addEventListener('submit', (ev) => {
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn?.classList.contains('loading')) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  });
+});
