@@ -1,4 +1,7 @@
 
+// ====== BACKEND (Google Apps Script) ======
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwcdBXj_a1N1bhROj1LNPQBf1yDQMRvEtc-hEDdWRSIoJLLq7cZEt5TVxcfDp5-wIL-Pg/exec'; // e.g. https://script.google.com/macros/s/AKfyc.../exec
+
 // ====== Konfigurasi yang mudah diedit ======
 const CONFIG = {
   eventDate: '2026-03-26T08:00:00+07:00',
@@ -24,24 +27,102 @@ window.addEventListener('DOMContentLoaded', () => {
   startCountdown(new Date(CONFIG.eventDate));
 
   // RSVP handling (LocalStorage demo)
-  const rsvpForm = $('#rsvpForm');
-  if(rsvpForm){
-    rsvpForm.addEventListener('submit', (e)=>{
+// ====== RSVP handling (Google Sheets) ======
+window.addEventListener('DOMContentLoaded', () => {
+  const rsvpForm = document.getElementById('rsvpForm');
+  const rsvpStatus = document.getElementById('rsvpStatus');
+
+  if (rsvpForm) {
+    rsvpForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = Object.fromEntries(new FormData(rsvpForm).entries());
-      const list = JSON.parse(localStorage.getItem('rsvp_list')||'[]');
-      data.time = new Date().toISOString();
-      list.push(data);
-      localStorage.setItem('rsvp_list', JSON.stringify(list));
-      $('#rsvpStatus').textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
-      rsvpForm.reset();
-      // Tambahkan juga ke ucapan
-      if(data.pesan){ addWish({nama:data.nama, pesan:data.pesan, time:new Date()}); }
+      // Normalisasi
+      data.jumlah = Number(data.jumlah || 0);
+      const payload = {
+        type: 'rsvp',
+        nama: (data.nama||'').trim(),
+        hp: (data.hp||'').trim(),
+        hadir: data.hadir || '',
+        jumlah: data.jumlah,
+        pesan: (data.pesan||'').trim()
+      };
+      rsvpStatus.textContent = 'Mengirim...';
+      try {
+        const result = await postToSheet(payload);
+        if (result.ok) {
+          rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
+          rsvpForm.reset();
+          // Jika ada pesan, langsung render ke list ucapan (biar terasa responsif)
+          if (payload.pesan) {
+            addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
+          }
+          // Refresh dari server (pastikan sinkron)
+          fetchWishes();    // tampilkan yang terbaru dari Sheet
+          fetchRsvpSummary(); // (opsional) update rekap
+        } else {
+          rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
+        }
+      } catch (err) {
+        rsvpStatus.textContent = 'Gagal menyimpan. Coba lagi.';
+      }
     });
   }
+});
+
 
   // Wishes existing (demo)
-  addWish({nama:'Mantan mu', pesan:'Selamat atas pernikahanmu, semoga langgeng sampai selamanya. Aamiin.', time:new Date('2026-02-20T13:00:00+07:00')});
+  // ====== Ucapan handling (Google Sheets) ======
+const wishListEl = document.getElementById('wishList');
+
+// function addWish({nama, pesan, time}) {
+//   if (!wishListEl) return;
+//   const item = document.createElement('div');
+//   item.className = 'wish';
+//   const dt = new Date(time);
+//   const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
+//   const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+//   item.innerHTML = `
+//     <div class="meta">${esc(nama)}</div>
+//     <div>${esc(pesan)}</div>
+//     <div class="meta">${tanggal} • ${jam} WIB</div>
+//   `;
+//   wishListEl.prepend(item);
+// }
+
+async function fetchWishes(limit=50){
+  try {
+    const res = await getFromSheet({ list:'wishes', limit:String(limit) });
+    if (res.ok && Array.isArray(res.data)) {
+      wishListEl.innerHTML = '';
+      res.data.forEach(w => {
+        addWish({ nama:w.nama, pesan:w.pesan, time:w.timestamp });
+      });
+    }
+  } catch (e) { /* boleh diamkan atau log */ }
+}
+
+document.getElementById('wishForm')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const nama = (fd.get('nama')||'').toString().trim();
+  const pesan = (fd.get('pesan')||'').toString().trim();
+  if (!nama || !pesan) return;
+
+  // Optimistic UI
+  addWish({ nama, pesan, time:new Date() });
+
+  try {
+    const res = await postToSheet({ type:'wish', nama, pesan });
+    if (!res.ok) {
+      // kalau gagal, tampilkan notifikasi sederhana (opsional: tarik ulang list)
+      // alert('Gagal menyimpan ucapan. Coba lagi.');
+    }
+  } catch(e2) { /* noop */ }
+  e.target.reset();
+});
+
+// Tarik list ucapan saat halaman siap
+window.addEventListener('DOMContentLoaded', fetchWishes);
 
   // Gift
   const btnGift = $('#btnGift');
@@ -74,12 +155,12 @@ function addWish({nama, pesan, time}){
   list.prepend(item);
 }
 
-$('#wishForm')?.addEventListener('submit', (e)=>{
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
-  addWish({nama:data.nama, pesan:data.pesan, time:new Date()});
-  e.target.reset();
-});
+// $('#wishForm')?.addEventListener('submit', (e)=>{
+//   e.preventDefault();
+//   const data = Object.fromEntries(new FormData(e.target).entries());
+//   addWish({nama:data.nama, pesan:data.pesan, time:new Date()});
+//   e.target.reset();
+// });
 
 function showGiftOptions(){
   const lines = CONFIG.gift.map(g=>`${g.label}:\n${g.value}`).join('\n\n');
@@ -111,16 +192,27 @@ window.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
-// Nama tamu: title-case + sapaan otomatis/param
-const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
-const sapaanParam = getQueryParam('sapaan');
-if(raw){
+// // Nama tamu: title-case + sapaan otomatis/param
+// const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
+// const sapaanParam = getQueryParam('sapaan');
+// if(raw){
+//   const cleaned = decodeURIComponent(raw).replace(/\+/g,' ').trim();
+//   const sal = inferSalutation(cleaned, sapaanParam); // Bapak/Ibu/Keluarga
+//   const pure = cleaned.replace(/^((bpk|bapak|pak|ibu|bu|keluarga|kel|family)\.?\s*)/i,'');
+//   const finalName = [sal, titleCase(pure)].filter(Boolean).join(' ');
+//   document.getElementById('guestName').textContent = finalName || titleCase(cleaned);
+// }
+
+// --- Nama tamu sederhana dari URL (?to= / ?nama= / ?guest=) ---
+(function(){
+  const span = document.getElementById('guestName');
+  if (!span) return;
+  const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
+  if (!raw) return;
   const cleaned = decodeURIComponent(raw).replace(/\+/g,' ').trim();
-  const sal = inferSalutation(cleaned, sapaanParam); // Bapak/Ibu/Keluarga
-  const pure = cleaned.replace(/^((bpk|bapak|pak|ibu|bu|keluarga|kel|family)\.?\s*)/i,'');
-  const finalName = [sal, titleCase(pure)].filter(Boolean).join(' ');
-  document.getElementById('guestName').textContent = finalName || titleCase(cleaned);
-}
+  span.textContent = cleaned;
+})();
+
 
 // Spawn partikel kecil
 for(let i=0;i<30;i++){ /* bikin <span class="particle"> dengan delay/durasi acak */ }
@@ -473,3 +565,59 @@ const GALLERY_IMAGES = [
   }
 })();
 
+// function esc(s=''){
+//   return String(s)
+//     .replaceAll('&','&amp;').replaceAll('<','&lt;')
+//     .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+// }
+
+function esc(s=''){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+
+async function postToSheet(payload){
+  // pakai text/plain supaya simple request (tanpa preflight)
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  });
+  return res.json().catch(()=>({ok:false, error:'Invalid JSON'}));
+}
+async function getFromSheet(params){
+  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url, { method:'GET' });
+  return res.json();
+}
+
+async function fetchRsvpSummary(){
+  const box = document.getElementById('rsvpSummary');
+  const statsEl = document.getElementById('rsvpStats');
+  const recentEl = document.getElementById('rsvpRecent');
+  if (!box || !statsEl || !recentEl) return;
+
+  try {
+    const res = await getFromSheet({ list:'rsvp', limit:'300' });
+    if (res.ok) {
+      const sum = res.summary || { totalHadir:0, konfirmasiHadir:0, tidakHadir:0 };
+      statsEl.textContent = `Konfirmasi Hadir: ${sum.konfirmasiHadir} | Tidak Hadir: ${sum.tidakHadir} | Estimasi Tamu Hadir: ${sum.totalHadir}`;
+      // Tampilkan 5 respons terakhir
+      const items = (res.data || []).slice(0, 5).map(r => {
+        const dt = new Date(r.timestamp);
+        const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
+        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+        return `<div class="wish"><div class="meta">${esc(r.nama)} • ${esc(r.hadir)} (${r.jumlah})</div><div class="meta">${tgl} • ${jam} WIB</div>${r.pesan?`<div>${esc(r.pesan)}</div>`:''}</div>`;
+      }).join('');
+      recentEl.innerHTML = items || '<div class="meta">Belum ada data</div>';
+      box.style.display = 'block';
+    }
+  } catch (e) { /* noop */ }
+}
+
+// Panggil saat halaman siap
+window.addEventListener('DOMContentLoaded', fetchRsvpSummary);
