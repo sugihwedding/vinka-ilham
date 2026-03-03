@@ -79,9 +79,8 @@ async function getFromSheet(params){
   }
   const url = buildUrlWithParams(GAS_GET_URL, params);
   const res = await fetch(url, { method:'GET', cache:'no-store' });
-  re
-
-
+  return res.json();
+}
 // ====== COUNTDOWN ======
 function startCountdown(target){
   const day=$('#tDay'), hour=$('#tHour'), min=$('#tMin'), sec=$('#tSec');
