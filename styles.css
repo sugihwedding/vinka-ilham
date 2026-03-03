@@ -755,13 +755,13 @@ body {
 }
 
 /* Swipe hint (opsional, saat layar kecil) */
-@media (hover:none){
+/* @media (hover:none){
   .galeri .slide::after{
     content: "← Geser →";
     position: absolute; bottom: 10px; right: 12px;
     font-size: .8rem; color: rgba(255,255,255,.75);
   }
-}
+} */
 
 .galeri .slide img{
   width: 100%;
@@ -775,3 +775,11 @@ body {
 @media (min-width: 900px){
 .galeri .slide{ block-size: 62vh; }    /* desktop */
 }
+.galeri .slide img{
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* dari cover -> contain */
+  background: #15110f;          /* warna latar kosong (opsional) */
+  filter: contrast(1.02) saturate(1.02);
+}
+
