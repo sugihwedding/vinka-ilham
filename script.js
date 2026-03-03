@@ -1,136 +1,87 @@
+/****************************************************
+ *  UNDANGAN – SCRIPT UTAMA (RSVP + UCAPAN + UI)
+ *  Versi: 2026-03-03
+ *  Catatan:
+ *  - Ganti GAS_URL dengan URL googleusercontent.com/macros/echo
+ *    dari deployment Apps Script (yang 200 OK).
+ ****************************************************/
 
 // ====== BACKEND (Google Apps Script) ======
-const GAS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // e.g. https://script.google.com/macros/s/AKfyc.../exec
+const GAS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // <= GANTI INI
 
-// ====== Konfigurasi yang mudah diedit ======
+
+// ====== KONFIGURASI ======
 const CONFIG = {
   eventDate: '2026-03-26T08:00:00+07:00',
   mapsUrl: 'https://maps.app.goo.gl/wmB3kTViFm2bD3tr9',
   gift: [
-    {label: 'Rekening BCA', value: '1234567890 a.n. Vinka'},
-    {label: 'Rekening Mandiri', value: '9876543210 a.n. Ilham'},
-    {label: 'Alamat Rumah', value: 'KP. Cibeureum Empe RT 03 RW 20, Pangalengan'}
+    { label: 'Rekening BCA',    value: '1234567890 a.n. Vinka' },
+    { label: 'Rekening Mandiri',value: '9876543210 a.n. Ilham' },
+    { label: 'Alamat Rumah',    value: 'KP. Cibeureum Empe RT 03 RW 20, Pangalengan' }
+  ],
+  gallery: [
+    {src:'assets/Foto-01.jpg', caption:''},
+    {src:'assets/Foto-02.jpg', caption:''},
+    {src:'assets/Foto-03.jpg', caption:''},
+    {src:'assets/Foto-04.jpg', caption:''},
+    {src:'assets/Foto-05.jpg', caption:''},
+    {src:'assets/Foto-06.jpg', caption:''},
+    {src:'assets/Foto-07.jpg', caption:''},
+    {src:'assets/Foto-08.jpg', caption:''},
+    {src:'assets/Foto-09.jpg', caption:''},
   ]
 };
 
-// ====== Helper ======
-const $ = (s, d=document)=>d.querySelector(s);
-const $$ = (s, d=document)=>Array.from(d.querySelectorAll(s));
+// ====== UTILITAS DOM & STRING ======
+const $  = (s, d=document)=> d.querySelector(s);
+const $$ = (s, d=document)=> Array.from(d.querySelectorAll(s));
 
-// ====== Inisialisasi ======
-window.addEventListener('DOMContentLoaded', () => {
-  // Map
-  const btnMap = $('#btnMap');
-  if(btnMap){ btnMap.href = CONFIG.mapsUrl; }
-
-  // Countdown
-  startCountdown(new Date(CONFIG.eventDate));
-
-  // RSVP handling (LocalStorage demo)
-// ====== RSVP handling (Google Sheets) ======
-window.addEventListener('DOMContentLoaded', () => {
-  const rsvpForm = document.getElementById('rsvpForm');
-  const rsvpStatus = document.getElementById('rsvpStatus');
-
-  if (rsvpForm) {
-    rsvpForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(rsvpForm).entries());
-      // Normalisasi
-      data.jumlah = Number(data.jumlah || 0);
-      const payload = {
-        type: 'rsvp',
-        nama: (data.nama||'').trim(),
-        hp: (data.hp||'').trim(),
-        hadir: data.hadir || '',
-        jumlah: data.jumlah,
-        pesan: (data.pesan||'').trim()
-      };
-      rsvpStatus.textContent = 'Mengirim...';
-      try {
-        const result = await postToSheet(payload);
-        if (result.ok) {
-          rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
-          rsvpForm.reset();
-          // Jika ada pesan, langsung render ke list ucapan (biar terasa responsif)
-          if (payload.pesan) {
-            addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
-          }
-          // Refresh dari server (pastikan sinkron)
-          fetchWishes();    // tampilkan yang terbaru dari Sheet
-          fetchRsvpSummary(); // (opsional) update rekap
-        } else {
-          rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
-        }
-      } catch (err) {
-        rsvpStatus.textContent = 'Gagal menyimpan. Coba lagi.';
-      }
-    });
-  }
-});
-
-
-  // Wishes existing (demo)
-  // ====== Ucapan handling (Google Sheets) ======
-const wishListEl = document.getElementById('wishList');
-
-// function addWish({nama, pesan, time}) {
-//   if (!wishListEl) return;
-//   const item = document.createElement('div');
-//   item.className = 'wish';
-//   const dt = new Date(time);
-//   const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
-//   const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-//   item.innerHTML = `
-//     <div class="meta">${esc(nama)}</div>
-//     <div>${esc(pesan)}</div>
-//     <div class="meta">${tanggal} • ${jam} WIB</div>
-//   `;
-//   wishListEl.prepend(item);
-// }
-
-async function fetchWishes(limit=50){
+function esc(s=''){
+  return String(s)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+function getQueryParam(name){
   try {
-    const res = await getFromSheet({ list:'wishes', limit:String(limit) });
-    if (res.ok && Array.isArray(res.data)) {
-      wishListEl.innerHTML = '';
-      res.data.forEach(w => {
-        addWish({ nama:w.nama, pesan:w.pesan, time:w.timestamp });
-      });
-    }
-  } catch (e) { /* boleh diamkan atau log */ }
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name);
+  } catch { return null; }
+}
+function buildUrlWithParams(base, params){
+  const hasQ = base.includes('?');
+  const prefix = hasQ ? '&' : '?';
+  return base + prefix + new URLSearchParams(params).toString();
 }
 
-document.getElementById('wishForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  const nama = (fd.get('nama')||'').toString().trim();
-  const pesan = (fd.get('pesan')||'').toString().trim();
-  if (!nama || !pesan) return;
+// ====== BACKEND HELPERS (FETCH) ======
+async function postToSheet(payload){
+  if (!GAS_URL || !GAS_URL.includes('googleusercontent.com/macros/echo')) {
+    console.warn('GAS_URL belum diisi URL googleusercontent.com/macros/echo yang valid.');
+  }
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'}, // simple request, hindari preflight
+    body: JSON.stringify(payload)
+  });
+  return res.json().catch(()=>({ok:false, error:'Invalid JSON'}));
+}
+async function getFromSheet(params){
+  if (!GAS_URL || !GAS_URL.includes('googleusercontent.com/macros/echo')) {
+    console.warn('GAS_URL belum diisi URL googleusercontent.com/macros/echo yang valid.');
+  }
+  // HINDARI double "?" -> gunakan builder
+  const url = buildUrlWithParams(GAS_URL, params);
+  const res = await fetch(url, { method:'GET', cache:'no-store' });
+  return res.json();
+}
 
-  // Optimistic UI
-  addWish({ nama, pesan, time:new Date() });
-
-  try {
-    const res = await postToSheet({ type:'wish', nama, pesan });
-    if (!res.ok) {
-      // kalau gagal, tampilkan notifikasi sederhana (opsional: tarik ulang list)
-      // alert('Gagal menyimpan ucapan. Coba lagi.');
-    }
-  } catch(e2) { /* noop */ }
-  e.target.reset();
-});
-
-// Tarik list ucapan saat halaman siap
-window.addEventListener('DOMContentLoaded', fetchWishes);
-
-  // Gift
-  const btnGift = $('#btnGift');
-  if(btnGift){ btnGift.addEventListener('click', showGiftOptions); }
-});
-
+// ====== COUNTDOWN ======
 function startCountdown(target){
   const day=$('#tDay'), hour=$('#tHour'), min=$('#tMin'), sec=$('#tSec');
+  if (!day || !hour || !min || !sec) return;
   function tick(){
     const now = new Date();
     const diff = Math.max(0, target - now);
@@ -138,74 +89,145 @@ function startCountdown(target){
     const h = Math.floor((diff%86400000)/3600000);
     const m = Math.floor((diff%3600000)/60000);
     const s = Math.floor((diff%60000)/1000);
-    day.textContent=d; hour.textContent=h; min.textContent=m; sec.textContent=s;
+    day.textContent  = d;
+    hour.textContent = h;
+    min.textContent  = m;
+    sec.textContent  = s;
   }
   tick();
   setInterval(tick, 1000);
 }
 
-function addWish({nama, pesan, time}){
-  const list = $('#wishList');
+// ====== UCAPAN (RENDER & LOAD) ======
+const wishListEl = $('#wishList');
+
+function addWish({nama, pesan, time}) {
+  if (!wishListEl) return;
   const item = document.createElement('div');
-  item.className='wish';
+  item.className = 'wish';
   const dt = new Date(time);
   const tanggal = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'long', year:'numeric'});
   const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-  item.innerHTML = `<div class="meta">${nama}</div><div>${pesan}</div><div class="meta">${tanggal} • ${jam} WIB</div>`;
-  list.prepend(item);
+  item.innerHTML = `
+    <div class="meta">${esc(nama)}</div>
+    <div>${esc(pesan)}</div>
+    <div class="meta">${tanggal} • ${jam} WIB</div>
+  `;
+  // tampilkan yang baru di atas
+  wishListEl.prepend(item);
 }
 
-// $('#wishForm')?.addEventListener('submit', (e)=>{
-//   e.preventDefault();
-//   const data = Object.fromEntries(new FormData(e.target).entries());
-//   addWish({nama:data.nama, pesan:data.pesan, time:new Date()});
-//   e.target.reset();
-// });
+// PENTING: deklarasikan sebagai function (di-hoist)
+async function fetchWishes(limit=50){
+  if (!wishListEl) return;
+  try {
+    const res = await getFromSheet({ list:'wishes', limit:String(limit), _ts:Date.now() });
+    if (res.ok && Array.isArray(res.data)) {
+      wishListEl.innerHTML = '';
+      res.data.forEach(w => addWish({ nama:w.nama, pesan:w.pesan, time:w.timestamp }));
+    }
+  } catch (e) {
+    console.warn('Gagal memuat ucapan:', e);
+  }
+}
 
+// ====== RSVP SUMMARY (opsional) ======
+async function fetchRsvpSummary(){
+  const box = $('#rsvpSummary');
+  const statsEl = $('#rsvpStats');
+  const recentEl = $('#rsvpRecent');
+  if (!box || !statsEl || !recentEl) return;
+
+  try {
+    const res = await getFromSheet({ list:'rsvp', limit:'300', _ts:Date.now() });
+    if (res.ok) {
+      const sum = res.summary || { totalHadir:0, konfirmasiHadir:0, tidakHadir:0 };
+      statsEl.textContent =
+        `Konfirmasi Hadir: ${sum.konfirmasiHadir} | Tidak Hadir: ${sum.tidakHadir} | Estimasi Tamu Hadir: ${sum.totalHadir}`;
+
+      const items = (res.data || []).slice(0,5).map(r=>{
+        const dt  = new Date(r.timestamp);
+        const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
+        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
+        return `<div class="wish">
+                  <div class="meta">${esc(r.nama)} • ${esc(r.hadir)} (${r.jumlah})</div>
+                  <div class="meta">${tgl} • ${jam} WIB</div>
+                  ${r.pesan ? `<div>${esc(r.pesan)}</div>` : ''}
+                </div>`;
+      }).join('');
+      recentEl.innerHTML = items || '<div class="meta">Belum ada data</div>';
+      box.style.display = 'block';
+    }
+  } catch (e) {
+    console.warn('Gagal memuat rekap RSVP:', e);
+  }
+}
+
+// ====== HANDLER FORM ======
+async function onSubmitWish(e){
+  e.preventDefault(); // anti refresh & anti ubah URL
+  const form = e.currentTarget;
+  const fd = new FormData(form);
+  const nama  = (fd.get('nama')  || '').toString().trim();
+  const pesan = (fd.get('pesan') || '').toString().trim();
+  if (!nama || !pesan) return;
+
+  // Optimistic UI: tampilkan dulu agar terasa cepat
+  addWish({ nama, pesan, time: new Date() });
+
+  try {
+    const res = await postToSheet({ type:'wish', nama, pesan });
+    // Sinkron dari server (urutan & format)
+    if (res?.ok) fetchWishes();
+  } catch (err) {
+    console.warn('Gagal submit ucapan:', err);
+  }
+  form.reset();
+}
+
+async function onSubmitRSVP(e){
+  e.preventDefault(); // anti refresh & anti ubah URL
+  const form = e.currentTarget;
+  const rsvpStatus = $('#rsvpStatus');
+
+  const data = Object.fromEntries(new FormData(form).entries());
+  const payload = {
+    type: 'rsvp',
+    nama:  (data.nama || '').trim(),
+    hp:    (data.hp   || '').trim(),
+    hadir: data.hadir || '',
+    jumlah: Number(data.jumlah || 0),
+    pesan: (data.pesan || '').trim()
+  };
+
+  if (rsvpStatus) rsvpStatus.textContent = 'Mengirim...';
+
+  try {
+    const result = await postToSheet(payload);
+    if (result.ok) {
+      if (rsvpStatus) rsvpStatus.textContent = 'Terima kasih, konfirmasi Anda tersimpan.';
+      form.reset();
+      if (payload.pesan) addWish({ nama: payload.nama, pesan: payload.pesan, time: new Date() });
+      fetchWishes();
+      fetchRsvpSummary();
+    } else {
+      if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan: ' + (result.error || 'Unknown error');
+    }
+  } catch (err) {
+    if (rsvpStatus) rsvpStatus.textContent = 'Gagal menyimpan. Periksa koneksi dan coba lagi.';
+    console.warn('Gagal submit RSVP:', err);
+  }
+}
+
+// ====== GIFT COPY ======
 function showGiftOptions(){
   const lines = CONFIG.gift.map(g=>`${g.label}:\n${g.value}`).join('\n\n');
   navigator.clipboard.writeText(lines).catch(()=>{});
-  // alert('Informasi hadiah telah disalin ke clipboard:\n\n'+lines);
 }
 
-// ===== Cover (splash) =====
-function getQueryParam(name){
-  const url = new URL(window.location.href);
-  return url.searchParams.get(name);
-}
-
-window.addEventListener('DOMContentLoaded', ()=>{
-  // Ambil nama tamu dari URL: ?to=Nama+Tamu (juga mendukung ?nama= / ?guest=)
-  const guest = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest');
-  if(guest){
-    const cleaned = decodeURIComponent(guest).replace(/\+/g,' ');
-    const span = document.getElementById('guestName');
-    if(span){ span.textContent = cleaned; }
-  }
-  // Tombol "Buka Undangan"
-  const btnOpen = document.getElementById('btnOpen');
-  const cover = document.getElementById('cover');
-  if(btnOpen && cover){
-    btnOpen.addEventListener('click', ()=>{
-      cover.classList.add('hide');
-      document.getElementById('hero')?.scrollIntoView({behavior:'smooth'});
-    });
-  }
-});
-// // Nama tamu: title-case + sapaan otomatis/param
-// const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
-// const sapaanParam = getQueryParam('sapaan');
-// if(raw){
-//   const cleaned = decodeURIComponent(raw).replace(/\+/g,' ').trim();
-//   const sal = inferSalutation(cleaned, sapaanParam); // Bapak/Ibu/Keluarga
-//   const pure = cleaned.replace(/^((bpk|bapak|pak|ibu|bu|keluarga|kel|family)\.?\s*)/i,'');
-//   const finalName = [sal, titleCase(pure)].filter(Boolean).join(' ');
-//   document.getElementById('guestName').textContent = finalName || titleCase(cleaned);
-// }
-
-// --- Nama tamu sederhana dari URL (?to= / ?nama= / ?guest=) ---
-(function(){
-  const span = document.getElementById('guestName');
+// ====== COVER + NAMA TAMU ======
+(function initGuestName(){
+  const span = $('#guestName');
   if (!span) return;
   const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
   if (!raw) return;
@@ -213,265 +235,96 @@ window.addEventListener('DOMContentLoaded', ()=>{
   span.textContent = cleaned;
 })();
 
-
-// Spawn partikel kecil
-for(let i=0;i<30;i++){ /* bikin <span class="particle"> dengan delay/durasi acak */ }
-
-// Musik & gate
-// btnMute.addEventListener('click', () => setMuted(!audio.muted));
-// btnOpen.addEventListener('click', async () => {
-//   try{ await audio.play(); }catch(e){}
-//   cover.classList.add('hide');
-//   document.body.classList.remove('no-scroll'); // buka scroll
-//   document.getElementById('hero').scrollIntoView({behavior:'smooth'});
-// });
-
-// ===== Utilities =====
-function canPlayAudioEl(el){
-  return el && typeof el.play === 'function';
+function rememberCoverState(){
+  // simpan state saat tombol Buka ditekan
+  $('#btnOpen')?.addEventListener('click', () => {
+    sessionStorage.setItem('inv_opened', '1');
+  });
+  // saat load kembali, jika sudah dibuka maka sembunyikan cover
+  if (sessionStorage.getItem('inv_opened') === '1') {
+    $('#cover')?.classList.add('hide');
+    document.body.classList.remove('no-scroll');
+  }
 }
 
-// Simpan preferensi mute di localStorage agar konsisten
-const AUDIO_STORE_KEY = 'wedding_audio_muted';
-
-document.addEventListener('DOMContentLoaded', () => {
-  const audio   = document.getElementById('bgMusic');
-  const muteBtn = document.getElementById('btnMute');
-  const openBtn = document.getElementById('btnOpen');
-  const cover   = document.getElementById('cover');
-
-  if (!canPlayAudioEl(audio)) return;
-
-  // 1) Set status awal mute dari storage (default: tidak mute)
-  const savedMuted = localStorage.getItem(AUDIO_STORE_KEY);
-  if (savedMuted !== null) {
-    audio.muted = savedMuted === 'true';
-    if (audio.muted) muteBtn?.classList.add('muted');
-  }
-
-  // 2) Tombol Mute/Unmute
-  function setMuted(m){
-    audio.muted = m;
-    muteBtn?.classList.toggle('muted', m);
-    localStorage.setItem(AUDIO_STORE_KEY, String(m));
-  }
-  muteBtn?.addEventListener('click', () => setMuted(!audio.muted));
-
-  // 3) Start musik saat Buka Undangan (HARUS dalam click handler)
-  openBtn?.addEventListener('click', async () => {
-    try {
-      // Di beberapa device, memanggil play() sekali di gesture sudah cukup
-      await audio.play();
-    } catch (err) {
-      // Fallback: coba “unlock” audio
-      try {
-        // a) Pastikan tidak mute paksa (beberapa device butuh ini)
-        audio.muted = false;
-        muteBtn?.classList.remove('muted');
-
-        // b) Set volume wajar (0.6) — beberapa browser ignore volume sebelum gesture
-        audio.volume = 0.6;
-
-        // c) Panggil play() lagi
-        await audio.play();
-      } catch (e2) {
-        // Jika masih gagal, tampilkan hint ringan (untuk dev)
-        console.warn('Autoplay ditolak. User bisa tekan ikon 🔊 untuk memulai audio.', e2);
-      }
-    }
-
-    // Lanjutkan transisi gate
-    cover?.classList.add('hide');
-    document.body.classList.remove('no-scroll');
-    document.getElementById('hero')?.scrollIntoView({behavior:'smooth'});
-  });
-
-  // 4) Safety: jika user menekan tombol mute sebelum buka, hormati preferensinya
-  //    dan jangan paksa unmute saat buka, kecuali kita berada di jalur fallback di atas.
-
-  // 5) (Opsional) Resume saat tab kembali aktif
-  document.addEventListener('visibilitychange', async () => {
-    if (!document.hidden && !audio.paused && !audio.muted) {
-      try { await audio.play(); } catch {}
-    }
-  });
-});
-
-const audio = document.getElementById('bgMusic');
-const muteBtn = document.getElementById('btnMute');
-const openBtn = document.getElementById('btnOpen');
-const cover   = document.getElementById('cover');
-
-function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-openBtn?.addEventListener('click', async () => {
-  // 1) Mulai musik (best effort, seperti sebelumnya)
-  try { await audio.play(); } catch(e) {}
-
-  // 2) Tambahkan class 'exit' agar animasi keluar berjalan
-  cover?.classList.add('exit');
-
-  // 3) Tunggu durasi paling panjang (sinkron dengan CSS)
-  //    Kalau kamu ubah durasi di CSS, samakan angka di bawah (mis. 1300ms).
-  await wait(1300);
-
-  // 4) Sembunyikan cover + buka scroll + scroll ke hero
-  cover?.classList.add('hide');
-  document.body.classList.remove('no-scroll');
-  document.getElementById('hero')?.scrollIntoView({behavior:'smooth'});
-});
-// ===== Bottom Nav Logic =====
-(function(){
-  const $ = (s,d=document)=>d.querySelector(s);
-  const $$ = (s,d=document)=>Array.from(d.querySelectorAll(s));
-
-  const audio   = $('#bgMusic');
+// ====== AUDIO & BOTTOM NAV (ringkas, aman) ======
+function initAudioAndNav(){
+  const audio  = $('#bgMusic');
+  const muteBtn = $('#btnMute');
   const openBtn = $('#btnOpen');
   const cover   = $('#cover');
   const nav     = $('#bottomNav');
   const btnLok  = $('#btnLokasi');
-  const btnMute = $('#btnMuteDock');
-  const AUDIO_STORE_KEY = 'wedding_audio_muted';
+  const dockMute= $('#btnMuteDock');
+  const AUDIO_KEY = 'wedding_audio_muted';
 
-  // Inisialisasi link Lokasi dari CONFIG
-  if (btnLok && typeof CONFIG?.mapsUrl === 'string') {
-    btnLok.href = CONFIG.mapsUrl;
-  }
+  if (btnLok && CONFIG?.mapsUrl) btnLok.href = CONFIG.mapsUrl;
 
-  // Tampilkan nav saat undangan dibuka (setalah anim exit jika ada)
-  function showNav() {
+  function showNav(){
     if (nav?.hasAttribute('hidden')) nav.removeAttribute('hidden');
     document.body.classList.add('nav-ready');
   }
-
-  // Scroll helper
-  function goTo(sel){
-    const el = $(sel);
-    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
-  }
-
-  // Klik Beranda/Acara
-  $$('.bottom-nav .nav-btn[data-target]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const sel = btn.getAttribute('data-target');
-      if (sel) goTo(sel);
-    });
-  });
-
-  // Status awal mute dari localStorage
-  const savedMuted = localStorage.getItem(AUDIO_STORE_KEY);
-  if (savedMuted !== null) {
-    audio.muted = (savedMuted === 'true');
-    btnMute?.classList.toggle('muted', audio.muted);
-  }
-
-  // Toggle mute/unmute
-  function setMuted(m){
-    audio.muted = m;
-    btnMute?.classList.toggle('muted', m);
-    localStorage.setItem(AUDIO_STORE_KEY, String(m));
-  }
-  btnMute?.addEventListener('click', async ()=>{
-    setMuted(!audio.muted);
-    if (!audio.muted && audio.paused){
-      try{ await audio.play(); }catch{}
-    }
-  });
-
-  // Saat "Buka Undangan" ditekan: play musik + tampilkan nav
+  // tampilkan nav saat dibuka
   openBtn?.addEventListener('click', async ()=>{
-    try { await audio.play(); } catch(e) {}
-    // Jika kamu punya animasi exit cover ~1300ms, boleh tunggu sebentar
-    setTimeout(showNav, 300); // tampilkan nav segera, atau sinkronkan dgn exit
+    try { await audio?.play(); } catch {}
+    setTimeout(showNav, 300);
+  });
+  if (cover?.classList.contains('hide')) showNav();
+
+  // simpan preferensi mute
+  const savedMuted = localStorage.getItem(AUDIO_KEY);
+  if (savedMuted !== null && audio) {
+    audio.muted = (savedMuted === 'true');
+    muteBtn?.classList.toggle('muted', audio.muted);
+    dockMute?.classList.toggle('muted', audio.muted);
+  }
+  function setMuted(m){
+    if (!audio) return;
+    audio.muted = m;
+    muteBtn?.classList.toggle('muted', m);
+    dockMute?.classList.toggle('muted', m);
+    localStorage.setItem(AUDIO_KEY, String(m));
+  }
+  muteBtn?.addEventListener('click', ()=> setMuted(!audio?.muted));
+  dockMute?.addEventListener('click', async ()=>{
+    setMuted(!audio?.muted);
+    if (!audio?.muted && audio?.paused){
+      try { await audio.play(); } catch {}
+    }
   });
 
-  // Safety: bila user reload saat cover sudah tersembunyi (mis. via anchor),
-  // tampilkan nav jika cover sudah mempunyai class 'hide'
-  if (cover?.classList.contains('hide')) showNav();
-})();
+  // play saat tombol buka
+  openBtn?.addEventListener('click', async ()=>{
+    try { await audio?.play(); } catch {}
+    cover?.classList.add('hide');
+    document.getElementById('hero')?.scrollIntoView({behavior:'smooth'});
+  });
+}
 
+// ====== GALERI (aman bila section ada) ======
+function initGallery(){
+  const slidesEl = $('#gallerySlides');
+  const dotsEl   = $('#galDots');
+  const btnPrev  = $('#galPrev');
+  const btnNext  = $('#galNext');
+  const chkAuto  = $('#galAutoplay');
 
-  (function() {
-    function copyToClipboard(text) {
-      if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text);
-      }
-      // Fallback for older/HTTP contexts
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try {
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        return Promise.resolve();
-      } catch (e) {
-        document.body.removeChild(ta);
-        return Promise.reject(e);
-      }
-    }
+  if (!slidesEl) return; // section belum ada
 
-    document.addEventListener('click', async (e) => {
-      const btn = e.target.closest('button[data-copy]');
-      if (!btn) return;
-      const text = btn.getAttribute('data-copy') || '';
-      const status = document.getElementById('giftCopyStatus');
-      try {
-        await copyToClipboard(text);
-        btn.textContent = 'Copied!';
-        if (status) status.textContent = 'Nomor rekening telah disalin.';
-        setTimeout(() => {
-          btn.textContent = 'Copy';
-          if (status) status.textContent = '';
-        }, 1600);
-      } catch (err) {
-        if (status) status.textContent = 'Gagal menyalin. Silakan salin manual.';
-      }
-    });
-  })();
-
-  // ===== GALERI: KONFIGURASI GAMBAR =====
-const GALLERY_IMAGES = [
-  {src:'assets/Foto-01.jpg', caption:''},
-  {src:'assets/Foto-02.jpg', caption:''},
-  {src:'assets/Foto-03.jpg', caption:''},
-  {src:'assets/Foto-04.jpg', caption:''},
-  {src:'assets/Foto-05.jpg', caption:''},
-  {src:'assets/Foto-06.jpg', caption:''},
-  {src:'assets/Foto-07.jpg', caption:''},
-  {src:'assets/Foto-08.jpg', caption:''},
-  {src:'assets/Foto-09.jpg', caption:''},
-];
-// ===== GALERI: SLIDER LOGIC =====
-(function(){
-  const slidesEl = document.getElementById('gallerySlides');
-  const dotsEl   = document.getElementById('galDots');
-  const btnPrev  = document.getElementById('galPrev');
-  const btnNext  = document.getElementById('galNext');
-  const chkAuto  = document.getElementById('galAutoplay');
-
-  if(!slidesEl) return; // section mungkin belum ada
-
-  // Render slides
-  slidesEl.innerHTML = GALLERY_IMAGES.map((g,i)=>(
+  slidesEl.innerHTML = CONFIG.gallery.map((g,i)=>(
     `<figure class="slide" role="listitem" aria-label="Slide ${i+1}">
-       <img src="${g.src}" alt="${g.caption||''}">
-       ${g.caption ? `<figcaption>${g.caption}</figcaption>` : ''}
+       <img src="${g.src}" alt="${esc(g.caption || '')}">
+       ${g.caption ? `<figcaption>${esc(g.caption)}</figcaption>` : ''}
      </figure>`
   )).join('');
 
-  // Render dots
-  dotsEl.innerHTML = GALLERY_IMAGES.map((_,i)=>(
+  dotsEl.innerHTML = CONFIG.gallery.map((_,i)=>(
     `<button class="dot" data-idx="${i}" aria-label="Ke slide ${i+1}"></button>`
   )).join('');
 
   const dots = Array.from(dotsEl.querySelectorAll('.dot'));
-  const total = GALLERY_IMAGES.length;
-  let index = 0;
-  let timer = null;
-  let autoInterval = 4000; // ms
+  const total = CONFIG.gallery.length;
+  let index = 0, timer = null, autoInterval = 4000;
 
   function go(i, {animate=true} = {}){
     index = (i + total) % total;
@@ -486,38 +339,17 @@ const GALLERY_IMAGES = [
     }
     dots.forEach((d,di)=>d.classList.toggle('active', di===index));
   }
-
   function next(){ go(index+1); }
   function prev(){ go(index-1); }
 
-  // Dots click
-  dots.forEach(d=>{
-    d.addEventListener('click', ()=> go(Number(d.dataset.idx)));
-  });
-
-  // Buttons
+  dots.forEach(d=> d.addEventListener('click', ()=> go(Number(d.dataset.idx))));
   btnNext?.addEventListener('click', next);
   btnPrev?.addEventListener('click', prev);
 
-  // Keyboard (panah kiri/kanan) ketika section galeri dalam viewport
-  document.addEventListener('keydown', (e)=>{
-    if(e.key==='ArrowRight') next();
-    else if(e.key==='ArrowLeft') prev();
-  });
+  function startAuto(){ stopAuto(); if(chkAuto?.checked){ timer = setInterval(next, autoInterval); } }
+  function stopAuto(){ if(timer) clearInterval(timer), timer=null; }
 
-  // Autoplay
-  function startAuto(){
-    stopAuto();
-    if(chkAuto?.checked){
-      timer = setInterval(next, autoInterval);
-    }
-  }
-  function stopAuto(){
-    if(timer) clearInterval(timer), timer=null;
-  }
   chkAuto?.addEventListener('change', startAuto);
-
-  // Pause saat hover/drag
   slidesEl.addEventListener('mouseenter', stopAuto);
   slidesEl.addEventListener('mouseleave', startAuto);
   btnNext?.addEventListener('mouseenter', stopAuto);
@@ -525,14 +357,10 @@ const GALLERY_IMAGES = [
   btnNext?.addEventListener('mouseleave', startAuto);
   btnPrev?.addEventListener('mouseleave', startAuto);
 
-  // Swipe (touch)
+  // swipe (touch)
   let startX=0, dx=0, dragging=false;
   slidesEl.addEventListener('touchstart', (e)=>{
-    dragging = true;
-    startX = e.touches[0].clientX;
-    dx = 0;
-    stopAuto();
-    slidesEl.style.transition = 'none';
+    dragging=true; startX=e.touches[0].clientX; dx=0; stopAuto(); slidesEl.style.transition='none';
   }, {passive:true});
   slidesEl.addEventListener('touchmove', (e)=>{
     if(!dragging) return;
@@ -541,110 +369,63 @@ const GALLERY_IMAGES = [
     slidesEl.style.transform = `translateX(${(-index*100)+percent}%)`;
   }, {passive:true});
   slidesEl.addEventListener('touchend', ()=>{
-    dragging=false;
-    slidesEl.style.transition = 'transform .45s cubic-bezier(.2,.7,.2,1)';
-    const threshold = slidesEl.clientWidth * 0.18; // 18% geser
-    if(Math.abs(dx) > threshold){
-      dx<0 ? next() : prev();
-    }else{
-      go(index); // snap back
-    }
+    dragging=false; slidesEl.style.transition='transform .45s cubic-bezier(.2,.7,.2,1)';
+    const threshold = slidesEl.clientWidth * 0.18;
+    if(Math.abs(dx) > threshold){ dx<0 ? next() : prev(); } else { go(index); }
     startAuto();
   });
 
-  // Mulai
   go(0, {animate:false});
   startAuto();
 
-  // Optional: jika user mengaktifkan "prefers-reduced-motion", nonaktifkan autoplay
+  // reduce motion
   if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    if (chkAuto) {
-      chkAuto.checked = false;
-    }
+    if (chkAuto) chkAuto.checked = false;
     stopAuto();
   }
-})();
-
-// function esc(s=''){
-//   return String(s)
-//     .replaceAll('&','&amp;').replaceAll('<','&lt;')
-//     .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-// }
-
-function esc(s=''){
-  return String(s)
-    .replaceAll('&','&amp;')
-    .replaceAll('<','&lt;')
-    .replaceAll('>','&gt;')
-    .replaceAll('"','&quot;')
-    .replaceAll("'","&#39;");
 }
 
-async function postToSheet(payload){
-  // pakai text/plain supaya simple request (tanpa preflight)
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(payload)
-  });
-  return res.json().catch(()=>({ok:false, error:'Invalid JSON'}));
-}
-async function getFromSheet(params){
-  const url = GAS_URL + '?' + new URLSearchParams(params).toString();
-  const res = await fetch(url, { method:'GET' });
-  return res.json();
-}
+// ====== INIT SAAT HALAMAN SIAP ======
+window.addEventListener('DOMContentLoaded', () => {
+  // Fallback agar form tidak default GET kalau HTML belum diset
+  $('#rsvpForm')?.setAttribute('method','post');
+  $('#wishForm')?.setAttribute('method','post');
 
-async function fetchRsvpSummary(){
-  const box = document.getElementById('rsvpSummary');
-  const statsEl = document.getElementById('rsvpStats');
-  const recentEl = document.getElementById('rsvpRecent');
-  if (!box || !statsEl || !recentEl) return;
+  // Map & Countdown
+  const btnMap = $('#btnMap');
+  if (btnMap) btnMap.href = CONFIG.mapsUrl;
+  startCountdown(new Date(CONFIG.eventDate));
 
-  try {
-    const res = await getFromSheet({ list:'rsvp', limit:'300' });
-    if (res.ok) {
-      const sum = res.summary || { totalHadir:0, konfirmasiHadir:0, tidakHadir:0 };
-      statsEl.textContent = `Konfirmasi Hadir: ${sum.konfirmasiHadir} | Tidak Hadir: ${sum.tidakHadir} | Estimasi Tamu Hadir: ${sum.totalHadir}`;
-      // Tampilkan 5 respons terakhir
-      const items = (res.data || []).slice(0, 5).map(r => {
-        const dt = new Date(r.timestamp);
-        const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
-        const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-        return `<div class="wish"><div class="meta">${esc(r.nama)} • ${esc(r.hadir)} (${r.jumlah})</div><div class="meta">${tgl} • ${jam} WIB</div>${r.pesan?`<div>${esc(r.pesan)}</div>`:''}</div>`;
-      }).join('');
-      recentEl.innerHTML = items || '<div class="meta">Belum ada data</div>';
-      box.style.display = 'block';
+  // Gift (copy single nomor) via event delegation
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-copy]');
+    if (!btn) return;
+    const text = btn.getAttribute('data-copy') || '';
+    const status = $('#giftCopyStatus');
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied!';
+      if (status) status.textContent = 'Nomor rekening telah disalin.';
+      setTimeout(()=>{ btn.textContent='Copy'; if (status) status.textContent=''; }, 1600);
+    } catch {
+      if (status) status.textContent = 'Gagal menyalin. Silakan salin manual.';
     }
-  } catch (e) { /* noop */ }
-}
+  });
+  // Gift (copy semua info)
+  $('#btnGift')?.addEventListener('click', showGiftOptions);
 
-// Panggil saat halaman siap
-window.addEventListener('DOMContentLoaded', fetchRsvpSummary);
+  // Cover: ingat status
+  rememberCoverState();
 
+  // Audio + nav + galeri
+  initAudioAndNav();
+  initGallery();
 
-window.addEventListener('DOMContentLoaded', () => {
-  fetchWishes();       // tampilkan ucapan dari Google Sheet
-  fetchRsvpSummary();  // (opsional) tampilkan rekap RSVP
+  // Form handler
+  $('#wishForm')?.addEventListener('submit', onSubmitWish);
+  $('#rsvpForm')?.addEventListener('submit', onSubmitRSVP);
+
+  // Load data awal (tanpa refresh)
+  fetchWishes();
+  fetchRsvpSummary();
 });
-
-document.getElementById('btnOpen')?.addEventListener('click', () => {
-  sessionStorage.setItem('inv_opened', '1');
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  if (sessionStorage.getItem('inv_opened') === '1') {
-    document.getElementById('cover')?.classList.add('hide');
-    document.body.classList.remove('no-scroll');
-  }
-});
-
-
-(function(){
-  const span = document.getElementById('guestName');
-  if (!span) return;
-  const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
-  if (!raw) return;
-  const cleaned = decodeURIComponent(raw).replace(/\+/g,' ').trim();
-  span.textContent = cleaned;
-})();
