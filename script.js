@@ -125,7 +125,7 @@ function addWish({nama, pesan, time}) {
 async function fetchWishes(limit = 50){
   if (!wishListEl) return;
   try {
-    const res  = await getFromSheet({ list: 'wish', limit: String(limit), _ts: Date.now() });
+    const res  = await getFromSheet({ list: 'wishes', limit: String(limit), _ts: Date.now() });
 
     // -- Normalisasi berbagai kemungkinan bentuk respons --
     let list = null;
