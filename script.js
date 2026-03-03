@@ -1,6 +1,6 @@
 
 // ====== BACKEND (Google Apps Script) ======
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwcdBXj_a1N1bhROj1LNPQBf1yDQMRvEtc-hEDdWRSIoJLLq7cZEt5TVxcfDp5-wIL-Pg/exec'; // e.g. https://script.google.com/macros/s/AKfyc.../exec
+const GAS_URL = 'https://script.googleusercontent.com/macros/echo?user_content_key=AY5xjrSPAOtAyU0TBzsbMElBm6aMjoAw8lOL8U6X6TSdF0td8fmz-ycFv1yFw32KCmMZ0Cq8iiSK4aX4wyMzHm3gaG8gqTRlNuZwp7LAIZetU70N-PgUrxla9bjiJF2QSTERFEjp9KUDxq2VSoSwBuda7ZeojW9oKAizk8vPyV6UJTYTU5BogCg1pBVGzQs1UTPVpqQqUDokfEqr-SkF5Pbcnm8UrqkdJOpkZ8XiuCMMuKq1MzLYntriOBvpw1MPTVFaqpEs6VTMN39wiK7JUUBJo0swvVHyAc6-eHCxlvZ2MkeRZQmLWQ3xHqTApS9aYw&lib=MmPXatP9RAZD5clwtEnUqhI0puHqVPr6u'; // e.g. https://script.google.com/macros/s/AKfyc.../exec
 
 // ====== Konfigurasi yang mudah diedit ======
 const CONFIG = {
@@ -621,3 +621,30 @@ async function fetchRsvpSummary(){
 
 // Panggil saat halaman siap
 window.addEventListener('DOMContentLoaded', fetchRsvpSummary);
+
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetchWishes();       // tampilkan ucapan dari Google Sheet
+  fetchRsvpSummary();  // (opsional) tampilkan rekap RSVP
+});
+
+document.getElementById('btnOpen')?.addEventListener('click', () => {
+  sessionStorage.setItem('inv_opened', '1');
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('inv_opened') === '1') {
+    document.getElementById('cover')?.classList.add('hide');
+    document.body.classList.remove('no-scroll');
+  }
+});
+
+
+(function(){
+  const span = document.getElementById('guestName');
+  if (!span) return;
+  const raw = getQueryParam('to') || getQueryParam('nama') || getQueryParam('guest') || '';
+  if (!raw) return;
+  const cleaned = decodeURIComponent(raw).replace(/\+/g,' ').trim();
+  span.textContent = cleaned;
+})();
