@@ -504,6 +504,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // Load data awal (tanpa refresh)
   fetchWishes();
   fetchRsvpSummary();
+  initRevealOnScroll();
+  initCoupleAvatarTilt();
 });
 
 // ====== REFRESH WISHES PERIODIK ======
@@ -553,3 +555,80 @@ function setButtonLoading(btn, loading, {textLoading='Mengirim...', textIdle} = 
     }
   });
 });
+function initRevealOnScroll(){
+  const els = document.querySelectorAll('.reveal');
+  if (!els.length) return;
+
+  // Jika user minta reduce motion, tampilkan semua langsung
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { els.forEach(el => el.classList.add('show')); return; }
+
+  const io = new IntersectionObserver((entries, obs)=>{
+    entries.forEach(entry=>{
+      if (entry.isIntersecting){
+        entry.target.classList.add('show');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { root: null, threshold: 0.2 });
+
+  els.forEach(el => io.observe(el));
+}
+// Tambah kelas reveal dari JS agar non-intrusif:
+['#mempelai .couple-card', '#akad .agenda', '#galeri .slider', '#rsvp .card', '#ucapan #wishList']
+  .forEach(sel => document.querySelectorAll(sel).forEach((el,i)=>{ el.classList.add('reveal'); el.dataset.delay = String((i%4)+1);} ));
+
+function initCoupleAvatarTilt(){
+  const cards = document.querySelectorAll('#mempelai .couple-card');
+  if (!cards.length) return;
+
+  // Event delegasi per card untuk hemat listener
+  cards.forEach(card=>{
+    const avatar = card.querySelector('.avatar img');
+    if (!avatar) return;
+    // Mark agar CSS tau
+    avatar.parentElement.setAttribute('data-tilt','1');
+
+    let raf = null;
+    const onMove = (e)=>{
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;   // 0..1
+      const y = (e.clientY - rect.top) / rect.height;   // 0..1
+      const rot  = (x - .5) * 4;   // derajat
+      const lift = (y - .5) * -4;  // derajat
+      const dz   = 6;              // px
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(()=>{
+        avatar.style.transform = `translateZ(0) perspective(400px) rotateY(${rot}deg) rotateX(${lift}deg) translateY(-1px)`;
+      });
+    };
+    const reset = ()=>{
+      if (raf) cancelAnimationFrame(raf);
+      avatar.style.transform = '';
+    };
+
+    card.addEventListener('mousemove', onMove);
+    card.addEventListener('mouseleave', reset);
+    card.addEventListener('touchstart', ()=>{}, {passive:true}); // iOS hint
+  });
+}  
+
+const totalRespon = Math.max(1, hadir + tidak); // hindari bagi nol
+const pHadir = Math.round((hadir / totalRespon) * 100);
+const pTidak = 100 - pHadir; // sisanya
+
+statsEl.innerHTML = `
+  <div class="rsvp-stats">
+    <span class="chip ok">Hadir <strong>${hadir}</strong></span>
+    <span class="chip no">Tidak <strong>${tidak}</strong></span>
+    <span class="chip estimate">Estimasi <strong>${estimasi}</strong></span>
+  </div>
+  <div class="rsvp-progress" title="Komposisi respon: ${pHadir}% hadir, ${pTidak}% tidak">
+    <span class="ok" style="width:${pHadir}%"></span>
+    <span class="no" style="width:${pTidak}%"></span>
+  </div>
+  <div class="rsvp-legend">
+    <small>${pHadir}% Hadir</small>
+    <small>${pTidak}% Tidak</small>
+  </div>
+`;
