@@ -844,3 +844,98 @@ button[disabled] {
 @media (min-width: 900px){
   #wishList { max-height: 500px; }
 }
+/* ==== Reveal on Scroll (default: tersembunyi) ==== */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity .6s ease, transform .6s ease;
+  will-change: opacity, transform;
+}
+.reveal.show {
+  opacity: 1;
+  transform: none;
+}
+
+/* Variasi arah jika perlu */
+.reveal-left   { transform: translateX(-16px); }
+.reveal-right  { transform: translateX(16px);  }
+.reveal-up     { transform: translateY(16px);  }
+.reveal-down   { transform: translateY(-16px); }
+
+/* Transisi berjenjang untuk item berurutan */
+.reveal[data-delay="1"] { transition-delay: .08s; }
+.reveal[data-delay="2"] { transition-delay: .16s; }
+.reveal[data-delay="3"] { transition-delay: .24s; }
+.reveal[data-delay="4"] { transition-delay: .32s; }
+
+/* Reduce motion: tampilkan langsung tanpa animasi */
+@media (prefers-reduced-motion: reduce){
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ==== Pulse lembut avatar mempelai ==== */
+.mempelai .avatar {
+  position: relative;
+  overflow: hidden; /* biar aura glow tidak kepotong */
+  border-radius: 50%;
+  transition: transform .25s ease, filter .25s ease;
+  will-change: transform, filter;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%; /* jaga-jaga */
+
+}
+
+/* Glow halus */
+.mempelai .avatar::after{
+  content:"";
+  position:absolute; inset:-6px;
+  border-radius:50%;
+  background: radial-gradient(ellipse at center,
+              rgba(198,163,107,.20), rgba(198,163,107,0) 60%);
+  filter: blur(6px);
+  opacity: .0;
+  transition: opacity .25s ease;
+}
+
+/* Denyut pelan (idle) */
+@keyframes softPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.018); }
+}
+.mempelai .avatar img{
+  animation: softPulse 5.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Hover: sedikit “mengangkat” + glow tampil */
+.couple-card:hover .avatar {
+  transform: translateY(-2px);
+  filter: saturate(1.05) contrast(1.02);
+}
+.couple-card:hover .avatar::after { opacity: .9; }
+
+/* Parallax (akan dipakai oleh JS dengan transform var) */
+.mempelai .avatar[data-tilt="1"] img{
+  transition: transform .12s ease;
+  will-change: transform;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .mempelai .avatar img{ animation: none; }
+}
+/* === RSVP: progress komposisi === */
+.rsvp-progress{
+  height:10px; border-radius:999px; overflow:hidden;
+  border:1px solid rgba(215,178,124,.35);
+  background:rgba(20,15,12,.55);
+  display:flex; margin-top:8px;
+}
+.rsvp-progress > span{ display:block; height:100%; }
+.rsvp-progress .ok{  background:linear-gradient(90deg, #2ea773, #3fbf7f); }
+.rsvp-progress .no{  background:linear-gradient(90deg, #cf6a5a, #e17b6b); }
+.rsvp-legend{
+  display:flex; justify-content:space-between; color:#cbb79c; margin-top:6px;
+}
