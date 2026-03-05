@@ -196,16 +196,13 @@ async function fetchRsvpSummary(){
       const arrRaw = Array.isArray(res.data) ? res.data : (Array.isArray(res.records) ? res.records : []);
       const arr = arrRaw.slice(0,5);
       if (arr.length > 0) {
-        const items = arr.map(r=>{
-          const dt = new Date(r.timestamp || r.time || r.createdAt || Date.now());
-          const tgl = dt.toLocaleDateString('id-ID',{day:'2-digit', month:'short', year:'numeric'});
-          const jam = dt.toLocaleTimeString('id-ID',{hour:'2-digit', minute:'2-digit'});
-          return `<div class="wish">
-            <div class="meta">${esc(r.nama || r.name || r.Nama || '')} • ${esc(r.hadir || '')} (${r.jumlah || 0})</div>
-            <div class="meta">${tgl} • ${jam} WIB</div>
-            ${r.pesan ? `<div>${esc(r.pesan)}</div>` : ''}
-          </div>`;
-        }).join('');
+
+      const items = arr.map(r => {
+        return `<div class="wish">
+          <div class="meta">${esc(r.nama || r.name || r.Nama || '')} • ${esc(r.hadir || '')}</div>
+        </div>`;
+      }).join('');
+
         recentEl.innerHTML = items;
       } else if (!recentEl.innerHTML.trim()) {
         recentEl.innerHTML = '<div class="meta">Belum ada data</div>';
