@@ -939,3 +939,34 @@ button[disabled] {
 .rsvp-legend{
   display:flex; justify-content:space-between; color:#cbb79c; margin-top:6px;
 }
+
+/* === RSVP: badge ringkas === */
+.rsvp-stats{
+  display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+}
+.chip{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; font-size:.85rem; line-height:1;
+  border:1px solid rgba(215,178,124,.65);
+  background:linear-gradient(180deg, rgba(32,26,22,.75), rgba(20,15,12,.65));
+  color:#f4e8d5;
+}
+.chip strong{ font-weight:600; color:#fff; }
+.chip.ok{ border-color:#3fbf7f; }
+.chip.no{ border-color:#e17b6b; }
+.chip.estimate{ border-color:#d7b27c; }
+
+/* === RSVP Progress Bar === */
+.rsvp-progress{
+  height:10px; border-radius:999px; overflow:hidden;
+  border:1px solid rgba(215,178,124,.35);
+  background:rgba(20,15,12,.55);
+  display:flex; margin-top:8px;
+}
+.rsvp-progress > span{ display:block; height:100%; }
+.rsvp-progress .ok{  background:linear-gradient(90deg, #2ea773, #3fbf7f); }
+.rsvp-progress .no{  background:linear-gradient(90deg, #cf6a5a, #e17b6b); }
+
+.rsvp-legend{
+  display:flex; justify-content:space-between; color:#cbb79c; margin-top:6px;
+}
